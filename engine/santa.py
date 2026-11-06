@@ -131,8 +131,8 @@ HOME_TZ = ZoneInfo("America/Los_Angeles")   # same as Home in settings.py
 
 TEST_SEASON_START = (11, 1)   # test flights start Nov 1 every year
 ALERTS_PER_HOUR = 2        # TOY alerts per hour
-ALERT_FIRST_HOUR = 7       # no alerts before 7am...
-ALERT_LAST_HOUR = 19       # ...or after 7:59pm
+ALERT_FIRST_HOUR = 0       # no alerts before 7am...
+ALERT_LAST_HOUR = 23       # ...or after 7:59pm
 RADAR_SECONDS = 12         # how long the radar page stays up in the rotation
 CHRISTMAS_MORNING_HOUR = 6 # MISSION COMPLETE starts at 6am Dec 25
 
