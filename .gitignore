@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+emulator_config.json
+.venv/
