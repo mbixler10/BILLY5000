@@ -36,6 +36,8 @@ class SpecialSlot(Page):
 
     @property
     def seconds(self):
+        if self.kind == "honorroll":
+            return sd.honor_seconds(self.arg)
         return settings.SPECIAL_PAGE_SECONDS.get(self.kind, 10)
 
     def draw(self, canvas, now, t):
@@ -51,6 +53,8 @@ class SpecialSlot(Page):
             sd.render_anniversary(f, self.arg, t)
         elif self.kind == "aprilfools":
             sd.render_april_fools(f, t)
+        elif self.kind == "honorroll":
+            sd.render_honor_roll(f, self.arg, t)
         elif self.kind == "trash":
             sd.render_trash(f, self.arg, t)
         f.flush(canvas)

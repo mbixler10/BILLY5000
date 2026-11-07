@@ -156,8 +156,37 @@ STRIPED_DAYS = [
      "text": ["#8FA3C9", "#6B2C33", "#D8D4C8"], "words": ["WE", "REMEMBER", "9/11"]},
     {"name": "CINCO DE MAYO", "date": "05-05", "stripes": ["#006341", "#F0F0F0", "#CE1126"],
      "text": ["#CE1126", "#006341", "#F0F0F0"], "words": ["FELIZ", "CINCO DE", "MAYO"]},
+    {"name": "VETERANS DAY", "date": "11-11", "stripes": ["#B0202C", "#F0F0F0", "#2040A0"],
+     "text": ["#F0F0F0", "#B0202C", "#F0F0F0"], "words": ["THANK YOU", "VETERANS", "11-11"]},
     {"name": "JUNETEENTH",   "date": "06-19", "stripes": ["#BF0A30", "#111111", "#007A3D"],
      "text": ["#FFFFFF", "#F4C430", "#FFFFFF"], "words": ["HAPPY", "JUNE-", "TEENTH"]},
+]
+
+# Veterans Day honor roll: shown right after the THANK YOU VETERANS page on 11-11,
+# two names per screen. Branch is one of: ARMY, NAVY, MARINES, MERCHANT MARINE,
+# AIR FORCE, COAST GUARD, SPACE FORCE.
+HONOR_ROLL_DATE = "11-11"
+HONOR_ROLL_SPEED = 6            # pixels per second the names roll upward (bigger = faster)
+HONOR_ROLL = [
+    ("DALE BIXLER", "ARMY"),
+    ("JACK SKAHEN", "NAVY"),
+    ("THOMAS HINES", "ARMY"),
+    ("AUSTIN FLEMING", "NAVY"),
+    ("RYAN MCGEOUGH", "NAVY"),
+    ("NATHAN GIBSON", "ARMY"),
+    ("LARRY STROMAN", "MARINES"),
+    ("TED O'CONNER", "NAVY"),
+    ("IAN VOSS", "MARINES"),
+    ("TED STEFANI", "ARMY"),
+    ("JIM KROLOPP", "NAVY"),
+    ("JOHN BACH", "NAVY"),
+    ("DALLAS BIXLER", "MERCHANT MARINE"),
+    ("AL BOSETTI", "ARMY"),
+    ("GREG MURRAY", "MARINES"),
+    ("KYLE MCGHIE", "NAVY"),
+    ("GYLES DREW", "ARMY"),
+    ("DR. MARGARET SHANNON", "NAVY"),
+    ("STUART MURPHY", "NAVY"),
 ]
 
 # Family birthdays and anniversaries: confetti page on the day.

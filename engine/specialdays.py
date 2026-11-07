@@ -228,6 +228,8 @@ def special_pages_for(d):
     st = striped_day_for(d)
     if st:
         pages.append(("striped", st))
+    if settings.HONOR_ROLL and "%02d-%02d" % (d.month, d.day) == settings.HONOR_ROLL_DATE:
+        pages.append(("honorroll", settings.HONOR_ROLL))
     return pages
 
 
@@ -450,6 +452,84 @@ def render_striped(f, sd, t):
         fnt = F5 if Frame.width(F5, word) <= 62 else F3
         th = 7 if fnt is F5 else 5
         f.text(fnt, word, 32 - Frame.width(fnt, word) // 2, band_top + (band_h - th) // 2, rgb(col))
+
+
+# ---------------------------------------------------------------- honor roll
+BRANCH_COLORS = {
+    "ARMY": (255, 204, 0),              # Army gold
+    "NAVY": (90, 140, 255),             # Navy blue, lifted so it reads on LEDs
+    "MARINES": (225, 30, 40),           # Marine scarlet
+    "MERCHANT MARINE": (170, 200, 235),
+    "AIR FORCE": (110, 170, 255),
+    "COAST GUARD": (255, 110, 40),
+    "SPACE FORCE": (200, 200, 210),
+}
+STAR = ["00100", "00100", "11111", "01110", "01010"]
+
+
+def _name_lines(name):
+    """One line if it fits beside the star, else split onto two lines."""
+    name = name.upper()
+    if 8 + Frame.width(F3, name) <= 63:
+        return [name]
+    words = name.split()
+    best = None
+    for k in range(1, len(words)):
+        a, b = " ".join(words[:k]), " ".join(words[k:])
+        w = max(Frame.width(F3, a), Frame.width(F3, b))
+        if best is None or w < best[0]:
+            best = (w, [a, b])
+    return best[1] if best else [name]
+
+
+def _honor_layout(roll):
+    """[(top offset, name lines, branch), ...] and the total height."""
+    rows, y = [], 0
+    for name, branch in roll:
+        lines = _name_lines(name)
+        rows.append((y, lines, branch))
+        y += 7 * len(lines) + 9          # name line(s) + branch line + gap
+    return rows, y
+
+
+def honor_seconds(roll):
+    """Long enough for the whole list to roll up and off the top once."""
+    _, height = _honor_layout(roll)
+    return 0.5 + (height + 32) / settings.HONOR_ROLL_SPEED + 0.5
+
+
+def render_honor_roll(f, roll, t):
+    """Movie-credits roll: the names float up from the bottom of the panel,
+    each with a star and its branch in the branch color."""
+    offset = 32 - max(0.0, t - 0.5) * settings.HONOR_ROLL_SPEED
+    rows, _ = _honor_layout(roll)
+
+    def shade(c, y):                     # names glide in and out at the edges
+        edge = min(y + 1, 32 - y)
+        return c if edge >= 4 else mix((0, 0, 0), c, edge / 4)
+
+    for rel, lines, branch in rows:
+        top = int(round(offset + rel))
+        height = 7 * len(lines) + 7
+        if top > 31 or top + height < 0:
+            continue
+        col = BRANCH_COLORS.get(branch.upper(), (200, 200, 200))
+        for y, bits in enumerate(STAR):
+            for x, b in enumerate(bits):
+                if b == "1" and 0 <= top + y < 32:
+                    f.set(1 + x, top + y, shade(col, top + y))
+        label = "US " + branch.upper()
+        if Frame.width(F3, label) > 56:
+            label = branch.upper()
+        w = Frame.width(F3, label)
+        items = [(ln, 8, top + 7 * k, WHITE) for k, ln in enumerate(lines)]
+        items.append((label, 8 if 8 + w <= 63 else 63 - w, top + 7 * len(lines), col))
+        for text, x, y, c in items:
+            g = Frame()
+            g.text(F3, text, x, y, c)
+            for (px, py), pc in g.px.items():
+                if 0 <= py < 32:
+                    f.set(px, py, shade(pc, py))
 
 
 BIRTHDAY_FIELD = (255, 255, 255)
