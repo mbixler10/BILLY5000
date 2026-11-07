@@ -13,7 +13,15 @@ from zoneinfo import ZoneInfo
 import settings
 from engine import alerts
 from engine.draw import centered, marquee, alert_bar
+from engine import bitfonts
 from .base import Page
+
+
+# The 4x6 panel font draws N like a squashed M ("UNTIL" looked wrong), so the
+# bottom line uses the 3x5 pixel font with a proper 4-wide N.
+# Slim 1 and colon so the longest line ("UNTIL 10:45PM WED") fits with room to spare.
+SMALL = dict(bitfonts.F3, N=["1001", "1101", "1011", "1001", "1001"],
+             **{"1": ["1", "1", "1", "1", "1"], ":": ["0", "1", "0", "1", "0"]})
 
 
 def _until(ends, tz):
@@ -48,4 +56,6 @@ class AlertPage(Page):
         alert_bar(canvas, self.code, a["kind"],
                   settings.COLOR_ALERT_BAR, settings.COLOR_ALERT_TEXT)
         marquee(canvas, "5x7", 19, settings.COLOR_ALERT_WHAT, a["what"], sub_t)
-        centered(canvas, "4x6", 29, settings.COLOR_NAME, _until(a["ends"], self.tz))
+        line = _until(a["ends"], self.tz)
+        x = (64 - bitfonts.width(SMALL, line)) // 2
+        bitfonts.draw(canvas, SMALL, line, x, 25, settings.COLOR_NAME)
