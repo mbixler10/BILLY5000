@@ -8,6 +8,7 @@ Fake alerts: python main.py --demo-alerts              (preview the red alert lo
 Fake sports: python main.py --demo-sports              (preview the sports pages)
 ITFDB test:  python main.py --demo-itfdb               (play the Dodgers flash now)
 Weather:     python main.py --demo-weather             (sample Seattle forecast)
+Bells test:  python main.py --demo-bells               (strike the ship's bells now)
 Santa test:  python main.py --demo-santa               (run a TOY alert now; add --at for other dates)
 """
 import argparse
@@ -19,7 +20,7 @@ from datetime import datetime
 import settings
 from engine.display import Display
 from engine import weather, alerts, sports, seattle_weather
-from pages import build_rotation, TAKEOVERS, SANTA_ALERT
+from pages import build_rotation, TAKEOVERS, SANTA_ALERT, SHIPS_BELLS
 
 FPS = 20
 log = logging.getLogger("billy5000")
@@ -47,6 +48,8 @@ def main():
                     help="run a Santa TOY alert right at startup")
     ap.add_argument("--demo-weather", action="store_true",
                     help="use a sample Seattle forecast to preview the weather pages")
+    ap.add_argument("--demo-bells", action="store_true",
+                    help="strike the ship's bells right after startup")
     ap.add_argument("--at", help='pretend it is this time, e.g. "2026-12-24 18:00"')
     args = ap.parse_args()
 
@@ -66,6 +69,8 @@ def main():
         sports.trigger_itfdb()
     if args.demo_santa:
         SANTA_ALERT.force = True
+    if args.demo_bells:
+        SHIPS_BELLS.force = True
 
     running = True
 
@@ -88,7 +93,8 @@ def main():
         while running and (t := time.monotonic() - started) < seconds:
             canvas = display.new_frame()
             n = now()
-            takeover = next((tk for tk in TAKEOVERS if tk.is_active(n)), None)
+            takeover = next((tk for tk in TAKEOVERS
+                             if tk.is_active(n) and not tk.yields_to(page)), None)
             try:
                 if takeover:
                     takeover.draw(canvas, n, time.monotonic())

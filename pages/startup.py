@@ -8,7 +8,7 @@ BILLY5000 start-up screen: plays once, the moment the clock launches (about 8 s)
                  10 TEAMS     OK
   3.0 - 3.2 s  white flash
   3.2 - 8.0 s  BILLY5000 logo: letters stamp in one at a time, a shine sweeps
-               across, a rule line grows out from the middle, WORLD CLOCK types in
+               across, a rule line grows out from the middle, WORLD CLOCK V1 types in
 
 Turn it off with STARTUP_SPLASH = False in settings.py.
 """
@@ -96,7 +96,7 @@ def _logo(f, t):
 
     # subtitle types in
     if t > 1.7:
-        sub = "WORLD CLOCK"
+        sub = f"WORLD CLOCK {settings.VERSION}".strip()
         n = min(len(sub), int((t - 1.7) * 14))
         x0 = 32 - Frame.width(F3, sub) // 2
         f.text(F3, sub[:n], x0, 24, GOLD)

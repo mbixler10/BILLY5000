@@ -43,3 +43,24 @@ def marquee(canvas, font_name, y, rgb, s, t, width=64, speed=20, pause=1.0):
     x = -(int(scrolled) % (w + gap))
     text(canvas, font_name, x, y, rgb, s)
     text(canvas, font_name, x + w + gap, y, rgb, s)
+
+
+def clock(canvas, x, baseline, rgb, hhmm):
+    """Big 7x13 time with a clean two-square colon (the font's own colon looks
+    like two little + signs). Returns the width drawn."""
+    hh, mm = hhmm.split(":")
+    w = text(canvas, "7x13", x, baseline, rgb, hh)
+    r, g, b = rgb
+    cx = x + w + 1
+    for top in (baseline - 8, baseline - 3):
+        for dx in (0, 1):
+            for dy in (0, 1):
+                canvas.SetPixel(cx + dx, top + dy, r, g, b)
+    w += 4
+    w += text(canvas, "7x13", x + w, baseline, rgb, mm)
+    return w
+
+
+def clock_width(hhmm):
+    hh, mm = hhmm.split(":")
+    return text_width("7x13", hh) + 4 + text_width("7x13", mm)

@@ -9,6 +9,7 @@ from .santa import SantaAlert, SantaRadar
 from .seattle_weather import SeattleNow, SeattleHourly, SeattleDaily
 from .special import SpecialSlot, Countdown, MAX_SLOTS
 from .startup import StartupSplash
+from .bells import ShipsBells
 
 
 SANTA_RADAR = SantaRadar()
@@ -52,4 +53,6 @@ def build_rotation():
 # Pages that take over the whole screen the moment they're active,
 # no matter what's showing.
 SANTA_ALERT = SantaAlert()
-TAKEOVERS = [StartupSplash(), ItfdbFlash(), SANTA_ALERT]   # first match wins
+SHIPS_BELLS = ShipsBells()
+# First match wins, so ITFDB and Santa outrank the bells.
+TAKEOVERS = [StartupSplash(), ItfdbFlash(), SANTA_ALERT, SHIPS_BELLS]

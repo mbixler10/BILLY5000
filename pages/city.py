@@ -16,7 +16,7 @@ from zoneinfo import ZoneInfo
 
 import settings
 from engine import weather, alerts, bitfonts
-from engine.draw import text, text_width, centered, marquee, alert_bar
+from engine.draw import text, text_width, centered, marquee, alert_bar, clock, clock_width
 from engine.icons import icon_for, draw_icon
 from .base import Page
 from .special import holiday_theme
@@ -58,9 +58,9 @@ class CityPage(Page):
         wx = weather.get(self.code)
         # big time + small AM/PM, centered as a group (left 46 columns if there's weather)
         ampm = "AM" if local.hour < 12 else "PM"
-        group = text_width("7x13", hhmm) + 2 + bitfonts.width(bitfonts.F3, ampm)
+        group = clock_width(hhmm) + 2 + bitfonts.width(bitfonts.F3, ampm)
         x = ((46 if wx else 64) - group) // 2
-        w = text(canvas, "7x13", x, 20, time_color, hhmm)
+        w = clock(canvas, x, 20, time_color, hhmm)
         bitfonts.draw(canvas, bitfonts.F3, ampm, x + w + 1, 11, time_color)
         if wx:
             draw_icon(canvas, icon_for(wx["code"], wx["day"]), 48, 9)

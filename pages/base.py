@@ -14,3 +14,7 @@ class Page:
     def draw(self, canvas, now, t):
         """Draw one frame. now = current datetime, t = seconds since page appeared."""
         raise NotImplementedError
+
+    def yields_to(self, page):
+        """Takeover pages only: return True to wait while `page` is on screen."""
+        return False

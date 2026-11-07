@@ -12,7 +12,14 @@ PANEL = {
 }
 
 # ---------------------------------------------------------------- start-up
+VERSION = "V1"          # shown on the start-up screen
 STARTUP_SPLASH = True   # BILLY5000 boot + logo screen when the clock launches
+
+# ---------------------------------------------------------------- ship's bells
+BELLS_ON = True                # strike the bells every half hour (home time)
+BELLS_HOLD_SECONDS = 4         # how long the page stays up after the last bell
+BELLS_WAIT_MINUTES = 5         # if Christmas has the screen, wait up to this long
+TRADITIONAL_DOG_WATCH = False  # False = US Navy: second dog watch strikes 5,6,7,8
 
 # ---------------------------------------------------------------- rotation
 PAGE_SECONDS = 8        # how long each page stays up
