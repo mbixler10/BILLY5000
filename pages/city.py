@@ -1,7 +1,7 @@
 """
 A place page:
 
-    JFK          THU
+    JFK   THU 11/06
     10:35PM  [icon]
              52°
     AUNT ERIN & UNC...   (scrolls if too long)
@@ -38,7 +38,12 @@ class CityPage(Page):
         if theme:
             holiday, ink, accent = theme
             code_c = name_c = temp_c = am_c = pm_c = ink
-            day_c = accent
+            # weekday/date in the accent color, unless it's too close to the
+            # field color to read (Thanksgiving, St. Patrick's) - then use the text color
+            field = holiday.get("field", "#000000").lstrip("#")
+            field = tuple(int(field[i:i + 2], 16) for i in (0, 2, 4))
+            far = sum((a - b) ** 2 for a, b in zip(accent, field)) ** 0.5 >= 120
+            day_c = accent if far else ink
             if self.is_home:
                 name = holiday["name"]
 
@@ -49,7 +54,9 @@ class CityPage(Page):
                       settings.COLOR_ALERT_BAR, settings.COLOR_ALERT_TEXT)
         else:
             text(canvas, "5x7", 1, 7, code_c, self.code)
-            day = local.strftime("%a").upper()
+            # weekday + that city's own date, e.g. "SAT 11/07"
+            day = local.strftime("%a").upper() + local.strftime(" %m/%d") if settings.CITY_DATE_ON \
+                else local.strftime("%a").upper()
             text(canvas, "5x7", 64 - 1 - 5 * len(day), 7, day_c, day)
 
         hhmm = f"{local.hour % 12 or 12}:{local.minute:02d}"

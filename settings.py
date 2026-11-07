@@ -12,7 +12,7 @@ PANEL = {
 }
 
 # ---------------------------------------------------------------- start-up
-VERSION = "V2.6"          # shown on the start-up screen
+VERSION = "V3"          # shown on the start-up screen
 STARTUP_SPLASH = True   # BILLY5000 boot + logo screen when the clock launches
 
 # ---------------------------------------------------------------- ship's bells
@@ -50,6 +50,10 @@ PLACES = [
     ("SCC", "DEADHORSE",                   "America/Anchorage",   70.19, -148.47),
     ("AVX", "AVALON",                      "America/Los_Angeles", 33.40, -118.42),
 ]
+
+# Show the date next to the weekday on the city pages ("SAT 11/07").
+# Each city shows its OWN date, so Hong Kong is often a day ahead.
+CITY_DATE_ON = True
 
 # ---------------------------------------------------------------- weather
 WEATHER_ON = True
