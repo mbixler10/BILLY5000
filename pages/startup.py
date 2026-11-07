@@ -1,14 +1,15 @@
 """
-BILLY5000 start-up screen: plays once, the moment the clock launches (about 8 s).
+BILLY5000 start-up screen: plays once, the moment the clock launches (about 12 s).
 
-  0.0 - 3.0 s  boot check, typed out like an ELFNET terminal:
-                 BOOTING...
-                 CLOCK        OK
-                 17 PLACES    OK      <- real counts from settings.py
-                 10 TEAMS     OK
-  3.0 - 3.2 s  white flash
-  3.2 - 8.0 s  BILLY5000 logo: letters stamp in one at a time, a shine sweeps
-               across, a rule line grows out from the middle, WORLD CLOCK V1 types in
+  0.0 - 0.8 s  POWER-ON: the panel snaps on like an old CRT - a bright line,
+               it opens up, static fizzles out
+  0.8 - 5.8 s  SYSTEM CHECK: diagnostics scroll past (power bus, panel, Billy's
+               Buds, sat uplink, NOAA, ESPN, each team with a check in its own color, ITFDB,
+               ELFNET...); a few make you wait; progress bar fills to 100%
+  5.8 - 6.7 s  ALL SYSTEMS GO
+  6.7 - 6.9 s  white flash
+  6.9 -11.7 s  BILLY5000 logo: letters stamp in, shine sweeps across, rule line
+               grows, WORLD CLOCK + version types in
 
 Turn it off with STARTUP_SPLASH = False in settings.py.
 """
@@ -16,12 +17,12 @@ import time
 
 import settings
 from engine import santa
-from engine.bitfonts import F3, F3_NARROW
+from engine.bitfonts import F3, F3_NARROW, F5
 from engine.specialdays import Frame
-from engine.teamcolors import mix
+from engine.teamcolors import mix, hexc
 from .base import Page
 
-SECONDS = 8.0
+SECONDS = 11.7
 AMBER = (255, 140, 0)
 GREEN = (0, 255, 60)
 WHITE = (242, 242, 242)
@@ -55,17 +56,158 @@ def _type(f, row, rgb, s, t, start, cps=16):
         f.fill(1 + n * 5, ROWS[row] - 6, 4 + n * 5, ROWS[row], rgb)
 
 
+CYAN = (64, 208, 255)
+RED = (255, 48, 48)
+DIM = (90, 90, 90)
+POWER_ON = 0.8
+CHECK_END = 5.8
+GO_END = 6.7
+
+
+def _noise(f, seed, density, top=0, bottom=31, level=1.0):
+    import random as _r
+    rng = _r.Random(seed)
+    for _ in range(int(64 * (bottom - top + 1) * density)):
+        v = int(rng.randint(60, 255) * level)
+        f.set(rng.randrange(64), rng.randint(top, bottom), (v, v, v))
+
+
+def _power_on(f, t):
+    """Old-CRT turn-on: a hot line stretches out, the picture opens up, static fades."""
+    if t < 0.22:                                   # the line grows from the middle
+        half = int(32 * t / 0.22)
+        f.fill(32 - half, 15, 31 + half, 16, (255, 255, 255))
+    elif t < 0.45:                                 # ...and opens up top and bottom
+        p = (t - 0.22) / 0.23
+        h = max(1, int(16 * p))
+        f.fill(0, 16 - h, 63, 15 + h, (40, 40, 48))
+        f.fill(0, 15, 63, 16, (255, 255, 255))
+        _noise(f, int(t * 40), 0.12, 16 - h, 15 + h)
+    else:                                          # static fizzles out
+        _noise(f, int(t * 40), 0.35 * (1 - (t - 0.45) / 0.35), level=0.8)
+
+
+LEAGUES = {"baseball/mlb": "MLB", "football/nfl": "NFL", "hockey/nhl": "NHL",
+           "football/college-football": "NCAAF", "basketball/mens-college-basketball": "NCAAB"}
+SHORT_NAMES = {"SEA LIONS": "PLNU"}
+
+
+def _led_bright(c, floor=170):
+    """Team primary, brightened (same hue) so dark navies still glow on the LEDs."""
+    m = max(c)
+    if m >= floor:
+        return c
+    k = floor / max(m, 1)
+    return tuple(min(255, int(v * k)) for v in c)
+
+
+def _team_rows():
+    rows = []
+    for cfg in settings.TEAMS:
+        lg = LEAGUES.get(cfg["league"], "")
+        name = SHORT_NAMES.get(cfg["name"], cfg["name"])
+        label = f"{lg} {name}".strip()
+        if Frame.width(F3, label) > 50:              # too long for the row: drop the league
+            label = name
+        color = cfg["secondary"] if cfg.get("check") == "secondary" else cfg["primary"]
+        rows.append((label, "CHECK", _led_bright(hexc(color)), 0))
+    return rows
+
+
+def _checks():
+    flags = len(getattr(settings, "FLAG_QUIZ_COUNTRIES", [])) + 36
+    rows = [
+        ("POWER BUS", "OK", GREEN, 0),
+        ("PANEL 64X32", "OK", GREEN, 0),
+        ("FONT ROM", "OK", GREEN, 0),
+        ("CLOCK SYNC", "OK", GREEN, 0.35),          # a pause for drama
+        ("BILLY'S BUDS", "OK", GREEN, 0),
+        ("SAT UPLINK", "LOCK", CYAN, 0.45),
+        ("NOAA FEED", "OK", GREEN, 0),
+        ("ESPN FEED", "OK", GREEN, 0.25),
+    ] + _team_rows() + [
+        ("ITFDB", "ARMED", RED, 0),
+        ("SHIP BELL", "OK", GREEN, 0),
+        (f"{flags} FLAGS", "OK", GREEN, 0),
+        ("ELFNET", "SECURE", AMBER, 0.3),
+    ]
+    out, at = [], 0.0
+    for label, status, color, wait in rows:
+        out.append((label, status, color, at, at + 0.12 + wait))
+        at += 0.24 + wait
+    return out, at
+
+
+CHECKMARK = ["....#", "...#.", "#.#..", ".#..."]
+
+
+def _system_check(f, t):
+    rows, total = _checks()
+    scale = (CHECK_END - POWER_ON - 0.2) / total        # fit the list in the time we have
+    shown = [r for r in rows if t >= r[3] * scale]
+    done = sum(1 for r in rows if t >= r[4] * scale)
+    pct = min(100, int(100 * done / len(rows)))
+
+    # header: system name, spinner, percent
+    f.text(F3, "SYS CHECK", 1, 0, AMBER)
+    if pct < 100:
+        k = int(t * 12) % 4                           # spinner: - \\ | /
+        pts = [[(0, 2), (1, 2), (2, 2)], [(0, 0), (1, 2), (2, 4)],
+               [(1, 0), (1, 2), (1, 4)], [(2, 0), (1, 2), (0, 4)]][k]
+        for dx, dy in pts:
+            f.set(39 + dx, dy, AMBER)
+            if dy in (0, 4) and k in (1, 3):
+                pass
+        for dx, dy in [[(0, 2), (1, 2), (2, 2)], [(0, 1), (2, 3)], [(1, 1), (1, 3)], [(2, 1), (0, 3)]][k]:
+            f.set(39 + dx, dy, AMBER)
+    p = f"{pct}%"
+    f.text(F3, p, 62 - Frame.width(F3, p), 0, WHITE if pct < 100 else GREEN)
+    f.fill(0, 6, 63, 6, (40, 30, 0))
+
+    # log: last 3 lines, newest at the bottom
+    for i, (label, status, color, start, ok_at) in enumerate(shown[-3:]):
+        y = 8 + i * 6
+        f.text(F3, label, 1, y, WHITE)
+        sx = 58 if status == "CHECK" else 62 - Frame.width(F3, status)
+        lx = 1 + Frame.width(F3, label) + 2
+        for x in range(lx, sx - 2, 2):                  # leader dots
+            f.set(x, y + 4, DIM)
+        if t >= ok_at * scale:
+            if status == "CHECK":                       # a green check mark for each team
+                for r, row in enumerate(CHECKMARK):
+                    for q, ch in enumerate(row):
+                        if ch == "#":
+                            f.set(sx + q, y + r, color)
+            else:
+                f.text(F3, status, sx, y, color)
+        elif int(t * 8) % 2 == 0:
+            f.text(F3, "....", 62 - Frame.width(F3, "...."), y, DIM)
+
+    # progress bar
+    f.fill(0, 27, 63, 31, (25, 25, 30))
+    fill = int(62 * pct / 100)
+    if fill:
+        f.fill(1, 28, fill, 30, GREEN if pct == 100 else CYAN)
+
+
+def _all_systems_go(f, t):
+    on = int(t / 0.12) % 2 == 0
+    edge = GREEN if on else (0, 90, 25)
+    f.fill(0, 0, 63, 0, edge); f.fill(0, 31, 63, 31, edge)
+    f.fill(0, 0, 0, 31, edge); f.fill(63, 0, 63, 31, edge)
+    s = "ALL SYSTEMS"
+    f.text(F3, s, 32 - Frame.width(F3, s) // 2, 4, WHITE)
+    go_w = Frame.width(F5, "GO", 2)
+    f.text(F5, "GO", 32 - go_w // 2, 12, GREEN if on or t > 0.5 else (0, 140, 40), 2)
+
+
 def _boot(f, t):
-    places = len(settings.PLACES) + 1
-    checks = [(f"CLOCK", 0.4, 0.9),
-              (f"{places} PLACES", 1.1, 1.8),
-              (f"{len(settings.TEAMS)} TEAMS" if settings.SPORTS_ON else "WEATHER", 2.0, 2.6)]
-    dots = "." * (int(t / 0.3) % 4) if t > 0.5 else ""
-    _type(f, 0, AMBER, "BOOTING" + dots, t, 0.0)
-    for row, (label, start, ok_at) in enumerate(checks, start=1):
-        _type(f, row, WHITE, label, t, start)
-        if t >= ok_at:
-            _text(f, santa.small(), 53, ROWS[row], GREEN, "OK")
+    if t < POWER_ON:
+        _power_on(f, t)
+    elif t < CHECK_END:
+        _system_check(f, t - POWER_ON)
+    else:
+        _all_systems_go(f, t - CHECK_END)
 
 
 def _logo(f, t):
@@ -105,12 +247,12 @@ def _logo(f, t):
 
 def draw_splash(canvas, t):
     f = _Frame()
-    if t < 3.0:
+    if t < GO_END:
         _boot(f, t)
-    elif t < 3.2:
-        f.bg = (255, 255, 255) if t < 3.08 else (90, 90, 90)
+    elif t < GO_END + 0.2:
+        f.bg = (255, 255, 255) if t < GO_END + 0.08 else (90, 90, 90)
     else:
-        _logo(f, t - 3.2)
+        _logo(f, t - GO_END - 0.2)
     f.flush(canvas)
 
 

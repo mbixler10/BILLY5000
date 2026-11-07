@@ -252,7 +252,7 @@ def _demo():
     fake = {
         "DODGERS": g("LAD", "SF", False, "in", "3", "2", "TOP 7TH"),
         "SEAHAWKS": g("SEA", "LAR", True, "pre", start=now + timedelta(days=3, hours=2)),
-        "USC": g("USC", "UCLA", True, "post", "34", "17", "FINAL", now - timedelta(hours=5)),
+        "TROJANS": g("USC", "UCLA", True, "post", "34", "17", "FINAL", now - timedelta(hours=5)),
         "KRAKEN": g("SEA", "VAN", False, "in", "1", "1", "2ND 8:14"),
         "NAVY": g("NAVY", "ARMY", False, "post", "17", "20", "FINAL", now - timedelta(hours=5)),
         "SEA LIONS": g("PLNU", "AZU", True, "post", "78", "71", "FINAL", now - timedelta(hours=6)),

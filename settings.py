@@ -79,23 +79,24 @@ ITFDB_SECONDS = 12             # length of the Dodgers game-start flash
 # league  = ESPN's sport/league path
 # team    = ESPN team slug or ID number
 # primary / secondary = team colors: chip color and the stripe on its edge
+# check = "secondary" to color this team's boot-screen check with the secondary color
 TEAMS = [
     {"name": "DODGERS",   "league": "baseball/mlb", "team": "lad",
      "primary": "#005A9C", "secondary": "#EF3E42", "itfdb": True},
     {"name": "MARINERS",  "league": "baseball/mlb", "team": "sea",
-     "primary": "#0C2C56", "secondary": "#005C5C"},
+     "primary": "#0C2C56", "secondary": "#005C5C", "check": "secondary"},
     {"name": "SEAHAWKS",  "league": "football/nfl", "team": "sea",
-     "primary": "#002244", "secondary": "#69BE28"},
+     "primary": "#002244", "secondary": "#69BE28", "check": "secondary"},
     {"name": "RAMS",      "league": "football/nfl", "team": "lar",
-     "primary": "#003594", "secondary": "#FFD100"},
-    {"name": "USC",       "league": "football/college-football", "team": "usc",
+     "primary": "#003594", "secondary": "#FFD100", "check": "secondary"},
+    {"name": "TROJANS",   "league": "football/college-football", "team": "usc",
      "primary": "#990000", "secondary": "#FFC72C"},
     {"name": "HUSKIES",   "league": "football/college-football", "team": "wash",
      "primary": "#4B2E83", "secondary": "#B7A57A"},
     {"name": "NAVY",      "league": "football/college-football", "team": "navy",
      "primary": "#00205B", "secondary": "#C5B783"},
     {"name": "KRAKEN",    "league": "hockey/nhl", "team": "sea",
-     "primary": "#001628", "secondary": "#99D9D9"},
+     "primary": "#001628", "secondary": "#99D9D9", "check": "secondary"},
     {"name": "DUCKS",     "league": "hockey/nhl", "team": "ana",
      "primary": "#FC4C02", "secondary": "#B9975B"},
     {"name": "SEA LIONS", "league": "basketball/mens-college-basketball", "team": "2500",
