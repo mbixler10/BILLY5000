@@ -119,25 +119,37 @@ def _pick(events, now):
 
 
 def view(name, now):
-    """What this team's page should show right now, or None to skip it."""
+    """What this team should show right now, as a list of pages (empty = skip):
+         live game          -> [live]
+         just finished      -> [final, next]  (next only if within SPORTS_NEXT_AFTER_FINAL_DAYS)
+         otherwise          -> [next]         (only if within SPORTS_IN_SEASON_DAYS)
+       Final-only teams (Point Loma) only ever show [final]."""
     with _lock:
         t = _teams.get(name)
         if not t:
-            return None
+            return []
         events, our_id, cfg = list(t["events"]), t["our_id"], t["cfg"]
 
     live, nxt, last = _pick(events, now)
+    if live and not cfg.get("final_only"):
+        return [("live", live, our_id)]
+
+    pages = []
+    if last:
+        sport = cfg["league"].split("/")[0]          # football / baseball / hockey / basketball
+        hours = settings.SPORTS_FINAL_HOURS.get(sport, 24)
+        until = last["date"] + GAME_LENGTH + timedelta(hours=hours)
+        if nxt:
+            until = min(until, nxt["date"])          # next game starting ends the final
+        if now < until:
+            pages.append(("final", last, our_id))
     if cfg.get("final_only"):
-        if last and now - last["date"] < GAME_LENGTH + timedelta(hours=settings.SPORTS_FINAL_ONLY_HOURS):
-            return "final", last, our_id
-        return None
-    if live:
-        return "live", live, our_id
-    if last and now - last["date"] < GAME_LENGTH + timedelta(hours=settings.SPORTS_FINAL_HOURS):
-        return "final", last, our_id
-    if nxt and nxt["date"] - now < timedelta(days=settings.SPORTS_IN_SEASON_DAYS):
-        return "next", nxt, our_id
-    return None
+        return pages
+    if nxt:
+        days = settings.SPORTS_NEXT_AFTER_FINAL_DAYS if pages else settings.SPORTS_IN_SEASON_DAYS
+        if nxt["date"] - now < timedelta(days=days):
+            pages.append(("next", nxt, our_id))
+    return pages
 
 
 # ------------------------------------------------------------------ ITFDB

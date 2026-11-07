@@ -12,7 +12,7 @@ PANEL = {
 }
 
 # ---------------------------------------------------------------- start-up
-VERSION = "V1"          # shown on the start-up screen
+VERSION = "V1.5"          # shown on the start-up screen
 STARTUP_SPLASH = True   # BILLY5000 boot + logo screen when the clock launches
 
 # ---------------------------------------------------------------- ship's bells
@@ -62,9 +62,17 @@ ALERTS_REFRESH_MINUTES = 5
 
 # ---------------------------------------------------------------- sports
 SPORTS_ON = True
-SPORTS_IN_SEASON_DAYS = 10     # skip a team if its next game is further off than this
-SPORTS_FINAL_HOURS = 12        # keep showing a final score this long after the game
-SPORTS_FINAL_ONLY_HOURS = 24   # same, for final-only teams (Point Loma)
+SPORTS_IN_SEASON_DAYS = 7      # only show a team if its next game is within this many days
+SPORTS_NEXT_AFTER_FINAL_DAYS = 14  # right after a game, show the next game if it's within
+                                   # this many days (covers NFL bye weeks)
+# How long a final score stays up after the game, by sport. It also comes down
+# the moment the team's next game starts.
+SPORTS_FINAL_HOURS = {
+    "football": 72,      # NFL + college football: 3 days
+    "baseball": 24,      # MLB
+    "hockey": 24,        # NHL
+    "basketball": 24,    # college basketball (Point Loma)
+}
 ITFDB_SECONDS = 12             # length of the Dodgers game-start flash
 
 # name    = just a label for the log

@@ -92,14 +92,21 @@ class SportsPage(Page):
     def __init__(self, cfg):
         self.cfg = cfg
         self.name = cfg["name"]
-        self.v = None
+        self.views = []
 
     def is_active(self, now):
-        self.v = sports.view(self.name, now)
-        return self.v is not None
+        self.views = sports.view(self.name, now)
+        return bool(self.views)
+
+    @property
+    def seconds(self):
+        # each page (final, then next game) gets its own turn
+        return settings.PAGE_SECONDS * max(1, len(self.views))
 
     def draw(self, canvas, now, t):
-        kind, game, our_id = self.v
+        n = min(int(t // settings.PAGE_SECONDS), len(self.views) - 1)
+        kind, game, our_id = self.views[n]
+        t = t - n * settings.PAGE_SECONDS
         us = next((tm for tm in game["teams"] if tm["id"] == our_id), game["teams"][0])
         them = next((tm for tm in game["teams"] if tm is not us), game["teams"][-1])
         opp_prim, opp_sec = resolve(self.cfg["league"], them["abbr"], them["color"], them["alt"])
