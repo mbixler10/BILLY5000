@@ -12,6 +12,7 @@ from .startup import StartupSplash
 from .bells import ShipsBells
 from .flagquiz import FlagQuiz, NauticalLesson
 from .lighthouse import LapStart, LighthouseSlot
+from .olympics import OlympicCountdown
 
 
 SANTA_RADAR = SantaRadar()
@@ -65,6 +66,9 @@ def build_rotation():
         lineup.append(NauticalLesson())
     if settings.LIGHTHOUSE_LESSON_ON:
         lineup.append(LighthouseSlot())
+    # Every few laps: the countdown to the next Olympics.
+    if settings.OLYMPICS_ON:
+        lineup.append(OlympicCountdown())
     return lineup
 
 

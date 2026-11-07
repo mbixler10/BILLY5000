@@ -12,7 +12,7 @@ PANEL = {
 }
 
 # ---------------------------------------------------------------- start-up
-VERSION = "V3.1"          # shown on the start-up screen
+VERSION = "V3.2"          # shown on the start-up screen
 STARTUP_SPLASH = True   # BILLY5000 boot + logo screen when the clock launches
 
 # ---------------------------------------------------------------- ship's bells
@@ -237,3 +237,23 @@ NAUTICAL_ORDER = "alphabet"    # "alphabet" (A, B, C... remembers its place) or 
 LIGHTHOUSE_LESSON_ON = True
 LIGHTHOUSE_MIN_SECONDS = 14       # shortest a lighthouse stays up
 LIGHTHOUSE_LIST = []              # [] = all of them, or names like ["NORTH HEAD", "ALKI POINT"]
+
+# ----------------------------------------------------------------- Olympics
+# Countdown to the next Games. Shows at the end of every Nth lap, not every lap.
+OLYMPICS_ON = True
+OLYMPICS_EVERY_LAPS = 3
+OLYMPICS_SECONDS = 16
+# After the countdown, a tribute card to Billy's great-grandfather.
+# Set OLYMPICS_TRIBUTE = None to skip it.
+OLYMPICS_TRIBUTE = {
+    "first": "DALLAS",
+    "last": "BIXLER",
+    "medal": "GOLD 1932",
+    "ticker": "GREAT-GRANDPA DALLAS BIXLER - OLYMPIC CHAMPION - HORIZONTAL BAR - "
+              "LOS ANGELES 1932, THE XTH OLYMPIAD - LA MEMORIAL COLISEUM",
+}
+# Upcoming Games: (short name, ticker name, opening ceremony, closing day,
+# time zone of the opening). Add the next ones as they get close.
+OLYMPICS = [
+    ("LA28", "THE LOS ANGELES OLYMPICS", "2028-07-14 17:00", "2028-07-30", "America/Los_Angeles"),
+]

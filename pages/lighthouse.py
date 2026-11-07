@@ -242,8 +242,10 @@ class _Picker:
         self.pick = -1
         self.deck = []
         self.row = None
+        self.lap = 0            # laps since start-up (other once-in-a-while pages use this too)
 
     def new_lap(self):
+        self.lap += 1
         self.pick = random.randrange(self.slots) if self.slots else -1
 
     def next_row(self):

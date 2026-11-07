@@ -76,4 +76,5 @@ journalctl -u billy5000 -f                # watch the log
 - [x] Lighthouse lesson: 58 lighthouses blink their real light pattern, one per lap at a random spot (`python main.py --lighthouse "NORTH HEAD"` to preview)
 - [x] Date on city pages (each city shows its own date) and the Peter & Katie Hong Kong page
 - [x] V3.1: date spacing on city pages, hand-set colors for small-college opponents (COLLEGE_COLORS)
+- [x] Olympic countdown to LA28 + tribute to Great-Grandpa Dallas Bixler (1932 gold, horizontal bar), every 3rd lap
 - [ ] Calendar
