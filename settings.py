@@ -188,3 +188,34 @@ COUNTDOWN_SKIP = ["09-11"]
 # shows Sunday ("TOMORROW") and Monday ("TODAY").
 TRASH_WEEKDAY = 0                      # Monday
 RECYCLING_ANCHOR = date(2026, 9, 21)   # confirmed real recycling Monday
+
+
+# ---------------------------------------------------------------- flag quiz
+FLAG_QUIZ_ON = True
+FLAG_GUESS_SECONDS = 10       # flag alone, time to guess
+FLAG_REVEAL_SECONDS = 6       # name showing
+FLAG_REVEAL_STYLE = "stamp"   # "plate", "box", "corner" or "stamp"
+FLAG_COUNTDOWN_BAR = True     # thin timer line along the bottom while guessing
+# One flag per lap, right after sports. Each round is a fresh random order (no repeats
+# until all have shown) so there's no sequence to learn. Remove a name to drop that flag.
+FLAG_QUIZ_COUNTRIES = [
+    "MALI", "REPUBLIC OF THE CONGO", "LITHUANIA", "BAHRAIN", "BAHAMAS", "BARBADOS",
+    "BANGLADESH", "BOTSWANA", "BULGARIA", "CAMEROON", "CHAD", "CHILE", "COSTA RICA",
+    "CZECHIA", "DJIBOUTI", "ESTONIA", "GAMBIA", "GEORGIA", "GHANA", "GREECE",
+    "ICELAND", "SWITZERLAND", "NORWAY", "THAILAND", "HUNGARY", "JAMAICA", "ARMENIA",
+    "LATVIA", "KUWAIT", "JORDAN", "FRANCE", "ITALY", "SWEDEN", "FINLAND",
+    "GREENLAND", "DENMARK", "IRELAND", "IVORY COAST",
+    # round 2
+    "CANADA", "JAPAN", "UNITED KINGDOM", "GERMANY", "NETHERLANDS", "BELGIUM", "AUSTRIA",
+    "POLAND", "UKRAINE", "ROMANIA", "RUSSIA", "LUXEMBOURG", "MONACO", "SCOTLAND",
+    "ENGLAND", "FAROE ISLANDS", "NIGERIA", "BENIN", "GUINEA", "SENEGAL", "TOGO", "LIBYA",
+    "SUDAN", "TANZANIA", "DR CONGO", "SEYCHELLES", "MAURITIUS", "COLOMBIA", "PERU",
+    "PANAMA", "CUBA", "PUERTO RICO", "DOMINICAN REPUBLIC", "TRINIDAD & TOBAGO", "GUYANA",
+    "SURINAME", "VIETNAM", "LAOS", "PALAU", "PHILIPPINES", "INDONESIA", "SINGAPORE",
+    "TAIWAN", "NEW ZEALAND", "AUSTRALIA", "QATAR", "UNITED ARAB EMIRATES",
+    # US states
+    "TEXAS", "COLORADO", "ALASKA", "ARIZONA", "NEW MEXICO", "MARYLAND", "HAWAII",
+    # round 3
+    "SOUTH AFRICA", "LEBANON",
+]
+

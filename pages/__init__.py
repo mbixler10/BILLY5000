@@ -10,6 +10,7 @@ from .seattle_weather import SeattleNow, SeattleHourly, SeattleDaily
 from .special import SpecialSlot, Countdown, MAX_SLOTS
 from .startup import StartupSplash
 from .bells import ShipsBells
+from .flagquiz import FlagQuiz
 
 
 SANTA_RADAR = SantaRadar()
@@ -36,17 +37,24 @@ def build_rotation():
 
     # Home, then (HOME_EVERY - 1) other places, then Home again...
     # Today's special pages (holiday greeting, birthdays, trash day...) open each lap.
-    lineup = [SpecialSlot(i) for i in range(MAX_SLOTS)] if settings.SPECIAL_DAYS_ON else []
+    groups = [[SpecialSlot(i) for i in range(MAX_SLOTS)]] if settings.SPECIAL_DAYS_ON else []
     step = settings.HOME_EVERY - 1
     for i in range(0, len(others), step):
-        lineup.extend(home)
-        for place in others[i:i + step]:
-            lineup.extend(place)
+        groups.append(home)
+        groups.extend(others[i:i + step])
+
+    lineup = []
+    for g in groups:
+        lineup.extend(g)
 
     # Sports run as one block at the end of each lap, no Home pages in between.
     # Teams that are out of season skip themselves.
     if settings.SPORTS_ON:
         lineup.extend(SportsPage(cfg) for cfg in settings.TEAMS)
+
+    # One flag-quiz flag per lap, right after sports.
+    if settings.FLAG_QUIZ_ON:
+        lineup.append(FlagQuiz())
     return lineup
 
 

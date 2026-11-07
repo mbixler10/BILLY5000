@@ -16,6 +16,8 @@ BILLY5000/
     sports.py        one page per team + the ITFDB flash
     santa.py         hooks the Santa Alert and Christmas radar into the clock
     seattle_weather.py  Seattle NOW, 12 HR and 5 DAY pages
+    flagquiz.py      flag quiz (flags drawn in engine/flags.py)
+    bells.py         ship's bells every half hour
     special.py       special days, trash day, countdown (drawing in engine/specialdays.py)
   fonts/             .bdf fonts
   run.ps1            run on your PC in the browser emulator
@@ -69,5 +71,5 @@ journalctl -u billy5000 -f                # watch the log
 - [x] Sports block (ESPN), including the ITFDB flash
 - [x] Santa Alert (ELFNET / TOY)
 - [ ] Ship's watch names
-- [ ] Flag quiz
+- [x] Flag quiz (94 flags incl. 7 US states, stamp reveal, after sports, random order)
 - [ ] Calendar
