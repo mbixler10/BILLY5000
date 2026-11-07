@@ -14,6 +14,7 @@ import random
 import settings
 from engine.bitfonts import F3, F5
 from engine.flags import FLAGS
+from engine.nautical import SIGNALS, draw_signal
 from engine.specialdays import Frame
 from engine.teamcolors import mix
 from .base import Page
@@ -134,8 +135,62 @@ def reveal_stamp(f, name, t):
 REVEALS = {"plate": reveal_plate, "box": reveal_box, "corner": reveal_corner, "stamp": reveal_stamp}
 
 
+# ------------------------------------------------------------------ nautical signal flags
+NAVY = (8, 22, 52)
+OUTLINE = (70, 70, 80)
+AMBER = (255, 176, 0)
+TICKER_PX_PER_SEC = 18
+TICKER_HOLD = 1.0
+
+
+def is_signal(name):
+    return name.startswith("SIGNAL ")
+
+
+def meaning_seconds(letter):
+    """Reveal time for a signal flag: long enough for the meaning to scroll past once."""
+    w = Frame.width(F3, SIGNALS[letter][1])
+    if w <= 60:
+        return settings.FLAG_REVEAL_SECONDS
+    return max(settings.FLAG_REVEAL_SECONDS, TICKER_HOLD + (w + 64) / TICKER_PX_PER_SEC + 1)
+
+
+def draw_signal_quiz(canvas, letter, t):
+    """
+    Signal flags are a lesson, not a quiz: everything shows right away.
+        [flag]  B          <- big letter
+                BRAVO
+        I AM TAKING IN, DISCHARGING...   <- meaning ticker
+    """
+    f = Frame()
+    draw_signal(f, letter, 2, 1, 24)
+    # faint outline so black parts (Lima, Zulu, 6, 9) don't vanish on the dark panel
+    shape = set(f.px)
+    for (x, y) in shape:
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if (nx, ny) not in shape and 0 <= nx < 64 and 0 <= ny < 26:
+                f.set(nx, ny, OUTLINE)
+    name, meaning = SIGNALS[letter]
+    x = 33 if letter.isdigit() else 31                 # pennants are a little longer
+    f.text(F5, letter, x, 1, AMBER, 2)
+    f.text(F3, name, x, 18, WHITE)
+    f.fill(0, 26, 63, 31, NAVY)
+    w = Frame.width(F3, meaning)
+    if w <= 60:
+        f.text(F3, meaning, 32 - w // 2, 27, AMBER)
+    else:
+        period = w + 24
+        off = int(max(0.0, t - TICKER_HOLD) * TICKER_PX_PER_SEC) % period
+        for x in (2 - off, 2 - off + period):
+            f.text(F3, meaning, x, 27, AMBER)
+    f.flush(canvas)
+
+
 def draw_quiz(canvas, name, t, style=None):
     """Guess phase (flag only), then the reveal. t = seconds into the page."""
+    if is_signal(name):
+        draw_signal_quiz(canvas, name[-1], t)
+        return
     f = flag_frame(name)
     guess = settings.FLAG_GUESS_SECONDS
     if t >= guess:
@@ -155,6 +210,8 @@ class FlagQuiz(Page):
 
     @property
     def seconds(self):
+        if self.name and is_signal(self.name):
+            return meaning_seconds(self.name[-1])          # no guessing for signal flags
         return settings.FLAG_GUESS_SECONDS + settings.FLAG_REVEAL_SECONDS
 
     def is_active(self, now):
@@ -163,6 +220,8 @@ class FlagQuiz(Page):
         if not self.deck:
             # a fresh random order every round, so there's no sequence to memorize
             self.deck = [n for n in settings.FLAG_QUIZ_COUNTRIES if n in FLAGS]
+            if settings.NAUTICAL_FLAGS_IN_QUIZ:
+                self.deck += [f"SIGNAL {letter}" for letter in SIGNALS]
             random.shuffle(self.deck)
             if len(self.deck) > 1 and self.deck[-1] == self.name:
                 self.deck[0], self.deck[-1] = self.deck[-1], self.deck[0]   # no back-to-back repeat
