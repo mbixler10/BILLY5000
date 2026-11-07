@@ -22,6 +22,7 @@ from datetime import datetime
 import settings
 from engine.display import Display
 from engine import weather, alerts, sports, seattle_weather
+import pages
 from pages import build_rotation, TAKEOVERS, SANTA_ALERT, SHIPS_BELLS
 
 FPS = 20
@@ -125,13 +126,20 @@ def main():
         i += 1
         if not page.is_active(now()):
             continue
+        pages.shown(page)            # counts toward when Home comes around again
         seconds = page.seconds or settings.PAGE_SECONDS
         started = time.monotonic()
+        last = started
         while running and (t := time.monotonic() - started) < seconds:
             canvas = display.new_frame()
             n = now()
             takeover = next((tk for tk in TAKEOVERS
                              if tk.is_active(n) and not tk.yields_to(page)), None)
+            frame_start = time.monotonic()
+            if takeover and getattr(page, "pause_on_takeover", False):
+                started += frame_start - last          # page's clock stands still underneath
+                t = frame_start - started
+            last = frame_start
             try:
                 if takeover:
                     takeover.draw(canvas, n, time.monotonic())

@@ -77,4 +77,6 @@ journalctl -u billy5000 -f                # watch the log
 - [x] Date on city pages (each city shows its own date) and the Peter & Katie Hong Kong page
 - [x] V3.1: date spacing on city pages, hand-set colors for small-college opponents (COLLEGE_COLORS)
 - [x] Olympic countdown to LA28 + tribute to Great-Grandpa Dallas Bixler (1932 gold, horizontal bar), every 3rd lap
+- [x] Veterans Day honor roll (scrolling) and 9/11 reading of the names from 8:46 AM ET, one name at a time (run tools/get_911_names.py once)
+- [x] V3.3: faster lighthouse page, lighter tickers, Home every 4th page that actually shows (alerts never count, one alert per visit); 9/11 reading on hold
 - [ ] Calendar

@@ -35,23 +35,32 @@ def _until(ends, tz):
 
 
 class AlertPage(Page):
+    """One alert page per visit, right after the city page, and it never counts
+    toward HOME_EVERY. If a place has several alerts, each visit shows the next
+    one in turn (most serious first), so Home doesn't get a long string of them."""
+
     def __init__(self, code, name, tz, lat=None, lon=None):
         self.code = code
         self.tz = ZoneInfo(tz)
         self.current = []
+        self.turn = 0
+        self.alert = None
 
     def is_active(self, now):
         self.current = alerts.get(self.code, now)
-        return bool(self.current)
+        if not self.current:
+            return False
+        self.alert = self.current[self.turn % len(self.current)]
+        self.turn += 1
+        return True
 
     @property
     def seconds(self):
-        return settings.PAGE_SECONDS * max(1, len(self.current))
+        return settings.PAGE_SECONDS
 
     def draw(self, canvas, now, t):
-        n = int(t // settings.PAGE_SECONDS) % len(self.current)
-        a = self.current[n]
-        sub_t = t % settings.PAGE_SECONDS
+        a = self.alert
+        sub_t = t
 
         alert_bar(canvas, self.code, a["kind"],
                   settings.COLOR_ALERT_BAR, settings.COLOR_ALERT_TEXT)

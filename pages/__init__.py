@@ -13,20 +13,27 @@ from .bells import ShipsBells
 from .flagquiz import FlagQuiz, NauticalLesson
 from .lighthouse import LapStart, LighthouseSlot
 from .olympics import OlympicCountdown
+from .home import HomeCity, HomeAlert, HomeSantaRadar, GATE, shown
 
 
-SANTA_RADAR = SantaRadar()
+SANTA_RADAR = HomeSantaRadar()
 
 
 def _place(p):
     """A place = its city page, followed by its alert page (which only shows
-    when NOAA has an active alert there)."""
-    return [CityPage(*p), AlertPage(*p)]
+    when NOAA has an active alert there). Alert pages never count as one of the
+    pages between Home visits."""
+    alert = AlertPage(*p)
+    alert.counts_toward_home = False
+    return [CityPage(*p), alert]
 
 
 def build_rotation():
-    # Dec 24-25 the Santa radar rides along right after every Home page.
-    home = _place(settings.HOME) + [SANTA_RADAR]
+    # Home = SEA's clock, its alert (if any) right behind it, and on Dec 24-25 the
+    # Santa radar. One Home stop waits in front of every group; it only shows once
+    # HOME_EVERY - 1 pages have actually been on screen since the last Home.
+    home_city, home_alert = HomeCity(*settings.HOME), HomeAlert(*settings.HOME)
+    home = [home_city, home_alert, SANTA_RADAR]
     others = [_place(p) for p in settings.PLACES]
     # Seattle's three detailed weather pages lead the lap, right after Home,
     # then the countdown to the next special day (same order as the old clock).
@@ -37,13 +44,12 @@ def build_rotation():
         lead += [[Countdown()]]
     others = lead + others
 
-    # Home, then (HOME_EVERY - 1) other places, then Home again...
-    # Today's special pages (holiday greeting, birthdays, trash day...) open each lap.
+    # Today's special pages (holiday greeting, birthdays, trash day...) open each lap,
+    # then Home, then the other pages with Home coming back after every few.
     groups = [[SpecialSlot(i) for i in range(MAX_SLOTS)]] if settings.SPECIAL_DAYS_ON else []
-    step = settings.HOME_EVERY - 1
-    for i in range(0, len(others), step):
+    for g in others:
         groups.append(home)
-        groups.extend(others[i:i + step])
+        groups.append(g)
 
     # The lighthouse lesson shows once per lap at a random spot: a hidden slot
     # waits after every group, and LapStart picks which one gets it this lap.
@@ -51,7 +57,7 @@ def build_rotation():
     lineup = [LapStart()]
     for g in groups:
         lineup.extend(g)
-        if settings.LIGHTHOUSE_LESSON_ON:
+        if settings.LIGHTHOUSE_LESSON_ON and g is not home:
             lineup.append(LighthouseSlot())
 
     # Sports run as one block at the end of each lap, no Home pages in between.
@@ -76,5 +82,7 @@ def build_rotation():
 # no matter what's showing.
 SANTA_ALERT = SantaAlert()
 SHIPS_BELLS = ShipsBells()
-# First match wins, so ITFDB and Santa outrank the bells.
-TAKEOVERS = [StartupSplash(), ItfdbFlash(), SANTA_ALERT, SHIPS_BELLS]
+# First match wins, so ITFDB and Santa outrank the bells. The 9/11 reading of
+# the names outranks everything except the start-up screen.
+from engine.specialdays import READING as NAMES_911
+TAKEOVERS = [StartupSplash(), NAMES_911, ItfdbFlash(), SANTA_ALERT, SHIPS_BELLS]

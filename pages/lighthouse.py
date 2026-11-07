@@ -76,22 +76,18 @@ def _tower_color(style, x, y):
     return TOWER_W
 
 
-def draw_scene(f, light, style, t):
-    """Sky, sea, rocks, tower and the light itself (with glow and beams)."""
-    color = light.color_at(t)
-    lit = LIGHT_RGB[color] if color else None
+def _build_scene(style, lit):
+    """Everything that doesn't move: sky, calm sea, beams, rocks, tower, lantern,
+    glow, and the shading behind the words. Built once per tower + light color."""
+    f = Frame()
 
     for y in range(0, 26):                              # night sky gradient
         c = mix(SKY_TOP, SKY_LOW, y / 25)
         for x in range(64):
             f.set(x, y, c)
-    for i, (x, y) in enumerate(STARS):                  # twinkling stars
-        a = 0.35 + 0.35 * (0.5 + 0.5 * math.sin(t * 1.7 + i * 2.1))
-        f.blend(x, y, (255, 255, 255), a)
-    for y in range(22, 26):                             # sea with little waves
+    for y in range(22, 26):                             # calm sea (waves are added per frame)
         for x in range(64):
-            wave = (x + int(t * 3) + y * 3) % 9 == 0
-            f.set(x, y, mix(SEA, (40, 70, 120), 0.6) if wave else SEA)
+            f.set(x, y, SEA)
 
     if lit:                                             # beams sweep out both ways from the lantern
         for x in range(64):
@@ -107,9 +103,6 @@ def draw_scene(f, light, style, t):
             for s in range(1, spread + 1):
                 f.blend(x, 6 - 1 - s, lit, a * 0.3)
                 f.blend(x, 6 + 1 + s, lit, a * 0.3)
-        for x in range(64):                             # reflection on the water
-            if (x + int(t * 5)) % 3 == 0:
-                f.blend(x, 22 + (x % 2), lit, max(0.0, 0.5 - abs(x - CX) / 40))
 
     for x, y in ((3, 23), (4, 22), (5, 22), (9, 22), (10, 22), (11, 23), (12, 24), (2, 24), (3, 24),
                  (4, 23), (5, 23), (6, 23), (7, 23), (8, 23), (9, 23), (10, 23), (11, 24), (4, 24),
@@ -138,6 +131,37 @@ def draw_scene(f, light, style, t):
                 d = math.hypot(dx, dy)
                 if 1.4 < d < 3.6:
                     f.blend(CX + dx, 6 + dy, lit, 0.7 * (1 - d / 3.6))
+    for x in range(TX - 1, 64):                         # darken behind the words a little
+        for y in range(0, 22):
+            f.blend(x, y, (0, 0, 0), 0.25)
+    open_sea = [(x, y) for y in range(22, 26) for x in range(64) if f.px.get((x, y)) == SEA]
+    return f.px, open_sea
+
+
+_SCENES = {}
+WAVE = mix(SEA, (40, 70, 120), 0.6)
+
+
+def draw_scene(f, light, style, t):
+    """The cached still scene, plus the moving bits: twinkling stars, waves,
+    and the light's reflection on the water."""
+    color = light.color_at(t)
+    lit = LIGHT_RGB[color] if color else None
+    key = (style, lit)
+    if key not in _SCENES:
+        _SCENES[key] = _build_scene(style, lit)
+    px, open_sea = _SCENES[key]
+    f.px = dict(px)
+    for i, (x, y) in enumerate(STARS):                  # twinkling stars
+        a = 0.35 + 0.35 * (0.5 + 0.5 * math.sin(t * 1.7 + i * 2.1))
+        f.blend(x, y, (255, 255, 255), a * (0.75 if x >= TX - 1 and y < 22 else 1.0))
+    step = int(t * 3)
+    glint = int(t * 5)
+    for x, y in open_sea:                               # little waves, and the light on the water
+        if (x + step + y * 3) % 9 == 0:
+            f.px[(x, y)] = WAVE
+        if lit and y in (22, 23) and y == 22 + (x % 2) and (x + glint) % 3 == 0:
+            f.blend(x, y, lit, max(0.0, 0.5 - abs(x - CX) / 40))
 
 
 def _wrap(name, max_w):
@@ -188,14 +212,13 @@ def page_seconds(row):
     return max(settings.LIGHTHOUSE_MIN_SECONDS, ticker, cycles, side)
 
 
+_BARS = {}
+
+
 def draw_lighthouse(canvas, row, t):
     name, town, st, light, style = row
     f = Frame()
     draw_scene(f, light, style, t)
-
-    for x in range(TX - 1, 64):                         # darken behind the words a little
-        for y in range(0, 22):
-            f.blend(x, y, (0, 0, 0), 0.25)
 
     lines = _wrap(name, 63 - TX)
     for i, s in enumerate(lines[:2]):
@@ -212,11 +235,16 @@ def draw_lighthouse(canvas, row, t):
         x0, x1 = TX, 62
         span = x1 - x0 + 1
         per = light.period if light.period > 1 else 1
-        for i in range(span):
-            c = light.color_at((i + 0.5) / span * per)
-            col = mix(LIGHT_RGB[c], (0, 0, 0), 0.15) if c else BAR_DARK
-            f.set(x0 + i, 19, col)
-            f.set(x0 + i, 20, col)
+        bar = _BARS.get(id(light))
+        if bar is None:                                 # the bar never changes: work it out once
+            bar = []
+            for i in range(span):
+                c = light.color_at((i + 0.5) / span * per)
+                bar.append(mix(LIGHT_RGB[c], (0, 0, 0), 0.15) if c else BAR_DARK)
+            _BARS[id(light)] = bar
+        for i, col in enumerate(bar):
+            f.px[(x0 + i, 19)] = col
+            f.px[(x0 + i, 20)] = col
         if light.period > 1:
             mx = x0 + int((t % per) / per * span)
             f.set(min(mx, x1), 18, WHITE)
@@ -267,6 +295,8 @@ class LapStart(Page):
 
     def is_active(self, now):
         PICKER.new_lap()
+        from .home import GATE
+        GATE.new_lap()
         return False
 
     def draw(self, canvas, now, t):

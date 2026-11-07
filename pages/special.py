@@ -35,6 +35,11 @@ class SpecialSlot(Page):
         return True
 
     @property
+    def pause_on_takeover(self):
+        """Rolling lists hold still while the bells (etc.) take over the screen."""
+        return self.kind == "honorroll"
+
+    @property
     def seconds(self):
         if self.kind == "honorroll":
             return sd.honor_seconds(self.arg)

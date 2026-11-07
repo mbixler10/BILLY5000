@@ -143,7 +143,7 @@ class ShipsBells(Page):
         if self.showing is not None:
             return False                 # already striking: finish
         kind = type(page).__name__
-        if kind == "SantaRadar":
+        if kind in ("SantaRadar", "HomeSantaRadar"):
             return True
         if kind == "SpecialSlot" and getattr(page, "kind", None) == "special" \
                 and page.arg.get("name") == "CHRISTMAS":

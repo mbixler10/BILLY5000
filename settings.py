@@ -12,7 +12,7 @@ PANEL = {
 }
 
 # ---------------------------------------------------------------- start-up
-VERSION = "V3.2"          # shown on the start-up screen
+VERSION = "V3.3"          # shown on the start-up screen
 STARTUP_SPLASH = True   # BILLY5000 boot + logo screen when the clock launches
 
 # ---------------------------------------------------------------- ship's bells
@@ -188,6 +188,17 @@ HONOR_ROLL = [
     ("DR. MARGARET SHANNON", "NAVY"),
     ("STUART MURPHY", "NAVY"),
 ]
+
+# 9/11 reading of the names: on September 11, starting the minute the first plane
+# struck (8:46 AM Eastern = 5:46 AM Pacific), the names of the 2,977 people killed
+# take over the screen one at a time and run without a break until every name
+# has been shown (about 2.5 hours). The rest of the day is the normal clock,
+# with the WE REMEMBER page each lap.
+# The names file comes from tools/get_911_names.py (run it once on the PC).
+NAMES_911_ON = False           # on hold until the names are downloaded and checked
+NAMES_911_START = (8, 46)       # Eastern time
+NAMES_911_HOLD = 3              # seconds each name is on screen by itself
+NAMES_911_TITLE_SECONDS = 4     # FDNY / NYPD / PAPD / WTC / PENTAGON ... title cards
 
 # Family birthdays and anniversaries: confetti page on the day.
 BIRTHDAYS = {

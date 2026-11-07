@@ -64,9 +64,16 @@ class Frame:
     def text(self, font, s, x, y, c, scale=1):
         """Draw s at (x, y); returns the horizontal advance."""
         cx = x
+        lo, hi = self.clip
         for ch in s:
             g = font.get(ch, font[" "])
             w = len(g[0])
+            if cx > hi:                                  # rest of the string is off screen
+                cx += (w + 1) * scale
+                continue
+            if cx + w * scale < lo:                      # this letter is off screen
+                cx += (w + 1) * scale
+                continue
             for r, row in enumerate(g):
                 for q, bit in enumerate(row):
                     if bit == "1":
@@ -530,6 +537,240 @@ def render_honor_roll(f, roll, t):
             for (px, py), pc in g.px.items():
                 if 0 <= py < 32:
                     f.set(px, py, shade(pc, py))
+
+
+# ---------------------------------------------------------------- 9/11 names
+from pathlib import Path as _Path
+_ROOT = _Path(__file__).resolve().parent.parent
+NAMES_FILE = _ROOT / "data" / "names_911.txt"
+NAMES_STATE = _ROOT / "state" / "names_911.txt"
+_names_cache = None
+BEAM = (90, 120, 200)              # the Tribute in Light, two faint beams
+
+
+FIRE_RED = (235, 45, 40)
+POLICE_BLUE = (80, 130, 255)
+GOLD = (255, 190, 60)
+
+# group: (title card lines, title color, small label under each name, label color)
+HEADINGS = {
+    "FDNY": (["FDNY"], FIRE_RED, "FDNY", FIRE_RED),
+    "NYPD": (["NYPD"], POLICE_BLUE, "NYPD", POLICE_BLUE),
+    "PAPD": (["PAPD"], POLICE_BLUE, "PAPD", POLICE_BLUE),
+    "WTC": (["WTC"], GOLD, "WTC", GOLD),
+    "DC": (["PENTAGON"], GOLD, "PENTAGON", GOLD),
+    "PA": (["FLIGHT 93"], GOLD, "FLIGHT 93", GOLD),
+    # files made before the NYPD/PAPD split
+    "FIRE": (["FDNY"], FIRE_RED, "FDNY", FIRE_RED),
+    "POLICE": (["POLICE"], POLICE_BLUE, "POLICE", POLICE_BLUE),
+    "NYC": (["WTC"], GOLD, "WTC", GOLD),
+}
+
+# Pentagon names are read by service, each in its color, with a title card.
+SERVICE_STYLE = {
+    "ARMY": ("US ARMY", (255, 204, 0)),
+    "NAVY": ("US NAVY", (70, 110, 255)),
+    "MARINES": ("US MARINES", (225, 30, 40)),
+    "AIR FORCE": ("US AIR FORCE", (120, 190, 255)),
+    "COAST GUARD": ("US COAST GUARD", (255, 120, 30)),
+    "CIVILIAN": ("CIVILIANS", WHITE),
+    "FLIGHT 77": ("FLIGHT 77", WHITE),
+}
+
+
+def _split_name(name):
+    """Wrap a long name onto as few lines as fit the panel."""
+    lines, cur = [], ""
+    for w in name.split():
+        trial = (cur + " " + w).strip()
+        if cur and Frame.width(F3, trial) > 62:
+            lines.append(cur)
+            cur = w
+        else:
+            cur = trial
+    lines.append(cur)
+    return lines
+
+
+def names_911():
+    """The reading, in order: [(kind, lines, color, label, label color), ...]
+    kind is "head" (group title), "sub" (Pentagon service title) or "name"."""
+    global _names_cache
+    if _names_cache is None:
+        _names_cache = []
+        try:
+            group = service = None
+            label, lcol = "", GOLD
+            for raw in NAMES_FILE.read_text(encoding="utf-8").splitlines():
+                if not raw.strip():
+                    continue
+                parts = raw.split("\t") if "\t" in raw else ["", raw]
+                g, name = parts[0], parts[1]
+                svc = parts[2].strip().upper() if len(parts) > 2 else ""
+                if g and g != group and g in HEADINGS:
+                    group, service = g, None
+                    lines, col, label, lcol = HEADINGS[g]
+                    _names_cache.append(("head", lines, col, "", col))
+                color = WHITE
+                if svc in SERVICE_STYLE:
+                    label, color = SERVICE_STYLE[svc]
+                    lcol = color
+                    if svc != service:
+                        service = svc
+                        _names_cache.append(("sub", [label], color, "", color))
+                name = name.strip().upper()
+                lines = [name] if Frame.width(F3, name) <= 62 else _split_name(name)
+                _names_cache.append(("name", lines, color, label, lcol))
+        except Exception:
+            _names_cache = []
+    return _names_cache
+
+
+_times_cache = None
+
+
+def _card_seconds(kind):
+    return {"head": settings.NAMES_911_TITLE_SECONDS,
+            "sub": settings.NAMES_911_TITLE_SECONDS * 0.7}.get(kind, settings.NAMES_911_HOLD)
+
+
+def _times():
+    """(start time of every card on one long reel, total length)."""
+    global _times_cache
+    if _times_cache is None:
+        starts, t = [], 0.0
+        for e in names_911():
+            starts.append(t)
+            t += _card_seconds(e[0])
+        _times_cache = (starts, t)
+    return _times_cache
+
+
+def _card_at(start, t):
+    """Which card is up t seconds after starting at card `start`, and how far into it."""
+    import bisect
+    starts, total = _times()
+    n = len(starts)
+    base = starts[start % n]
+    wraps, rem = divmod(base + t, total)
+    idx = max(0, bisect.bisect_right(starts, rem) - 1)
+    a = int(wraps) * n + idx
+    return a, rem - starts[idx]
+
+
+class NamesReading:
+    """The 9/11 reading of the names, as a takeover: starts at the moment the
+    attacks began (NAMES_911_START, Eastern time) and runs without a break until
+    every name has had its moment. Progress is saved as it goes, so a restart or
+    anything that briefly covers the screen picks up at the next name."""
+
+    def __init__(self):
+        self.cursor = 0
+        self.year = None
+        self.done = False
+        self.anchor = None             # (card index, monotonic time) the current run started
+        self.last_draw = 0.0
+        self._saved_at = 0
+
+    def _load(self, year):
+        try:
+            parts = NAMES_STATE.read_text().strip().split(":")
+            if int(parts[0]) == year:
+                return int(parts[1]), len(parts) > 2 and parts[2] == "done"
+        except Exception:
+            pass
+        return 0, False
+
+    def _save(self):
+        try:
+            NAMES_STATE.parent.mkdir(exist_ok=True)
+            NAMES_STATE.write_text("%d:%d%s" % (self.year, self.cursor, ":done" if self.done else ""))
+        except Exception:
+            pass
+
+    def start_time(self, now):
+        h, m = settings.NAMES_911_START
+        et = ZoneInfo("America/New_York")
+        return now.astimezone(et).replace(hour=h, minute=m, second=0, microsecond=0)
+
+    def is_active(self, now):
+        if not settings.NAMES_911_ON or not names_911():
+            return False
+        local = now.astimezone(HOME)
+        if (local.month, local.day) != (9, 11):
+            return False
+        if self.year != local.year:
+            self.year = local.year
+            self.cursor, self.done = self._load(local.year)
+            self.anchor = None
+        return not self.done and now >= self.start_time(now)
+
+    def draw(self, canvas, now, mono):
+        import time as _t
+        mono = _t.monotonic()
+        if self.anchor is None or mono - self.last_draw > 0.5:
+            self.anchor = (self.cursor, mono)        # (re)start at the next unread name
+        self.last_draw = mono
+        start, t0 = self.anchor
+        f = Frame()
+        upto = render_names_911(f, start, mono - t0)
+        f.flush(canvas)
+        n = len(names_911())
+        if upto > self.cursor:
+            self.cursor = upto
+            if self.cursor >= n:
+                self.done = True                     # every name has had its moment
+                self._save()
+                return
+        if mono - self._saved_at > 2:
+            self._saved_at = mono
+            self._save()
+
+    def yields_to(self, page):
+        return False
+
+    def finish_estimate(self, now):
+        starts, total = _times()
+        return self.start_time(now) + timedelta(seconds=total)
+
+
+READING = NamesReading()
+
+
+def render_names_911(f, start, t):
+    """One name at a time, still and centered, fading in and out.
+    Returns the index of the card on screen (every card before it has been shown)."""
+    for x0 in (21, 42):                                  # Tribute in Light
+        for y in range(32):
+            a = 0.10 + 0.08 * (1 - y / 31)
+            for dx in (-1, 0, 1):
+                f.blend(x0 + dx, y, BEAM, a * (1.0 if dx == 0 else 0.5))
+    a, into = _card_at(start, max(0.0, t))
+    entries = names_911()
+    kind, lines, col, label, lcol = entries[a % len(entries)]
+    dur = _card_seconds(kind)
+    fade = min(1.0, into / 0.35, max(0.0, (dur - into) / 0.35))
+
+    def ink(c):
+        return mix((0, 0, 0), c, fade)
+
+    if kind == "name":
+        h = 7 * len(lines) - 2
+        top = max(1, (24 - h) // 2)
+        for k, ln in enumerate(lines):
+            f.text(F3, ln, 32 - Frame.width(F3, ln) // 2, top + 7 * k, ink(col))
+        if label:
+            lc = mix((0, 0, 0), lcol, 0.75)
+            f.text(F3, label, 32 - Frame.width(F3, label) // 2, 26, ink(lc))
+    else:
+        # title card: big letters when they fit (FDNY, NYPD, WTC...), small otherwise
+        big = all(Frame.width(F5, ln) <= 62 for ln in lines)
+        fnt, lh = (F5, 9) if big else (F3, 7)
+        h = lh * len(lines) - 2
+        top = (32 - h) // 2
+        for k, ln in enumerate(lines):
+            f.text(fnt, ln, 32 - Frame.width(fnt, ln) // 2, top + lh * k, ink(col))
+    return a + 1 if into >= dur - 0.4 else a
 
 
 BIRTHDAY_FIELD = (255, 255, 255)
