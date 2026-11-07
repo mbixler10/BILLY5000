@@ -75,4 +75,5 @@ journalctl -u billy5000 -f                # watch the log
 - [x] Nautical lesson: 26 letter flags + 10 numeral pennants, one per lap, A-Z then 0-9
 - [x] Lighthouse lesson: 58 lighthouses blink their real light pattern, one per lap at a random spot (`python main.py --lighthouse "NORTH HEAD"` to preview)
 - [x] Date on city pages (each city shows its own date) and the Peter & Katie Hong Kong page
+- [x] V3.1: date spacing on city pages, hand-set colors for small-college opponents (COLLEGE_COLORS)
 - [ ] Calendar
