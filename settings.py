@@ -34,6 +34,7 @@ HOME = ("SEA", "HOME", "America/Los_Angeles", 47.45, -122.31)
 PLACES = [
     ("SNA", "GRANDPA & GRANDMA",           "America/Los_Angeles", 33.68, -117.87),
     ("JFK", "AUNT ERIN & UNCLE LUKE",      "America/New_York",    40.64,  -73.78),
+    ("HKG", "PETER & KATIE",               "Asia/Hong_Kong",      22.31,  113.91),
     ("SAN", "THE SKAHENS",                 "America/Los_Angeles", 32.73, -117.19),
     ("BOS", "AUNT KENDALL & UNCLE ANTONE", "America/New_York",    42.36,  -71.01),
     ("DCA", "AUNT HOPE",                   "America/New_York",    38.85,  -77.04),
