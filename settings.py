@@ -12,7 +12,7 @@ PANEL = {
 }
 
 # ---------------------------------------------------------------- start-up
-VERSION = "V2.5"          # shown on the start-up screen
+VERSION = "V2"          # shown on the start-up screen
 STARTUP_SPLASH = True   # BILLY5000 boot + logo screen when the clock launches
 
 # ---------------------------------------------------------------- ship's bells
@@ -81,7 +81,7 @@ ITFDB_SECONDS = 12             # length of the Dodgers game-start flash
 # primary / secondary = team colors: chip color and the stripe on its edge
 TEAMS = [
     {"name": "DODGERS",   "league": "baseball/mlb", "team": "lad",
-     "primary": "#002F6C", "secondary": "#EF3E42", "itfdb": True},
+     "primary": "#005A9C", "secondary": "#EF3E42", "itfdb": True},
     {"name": "MARINERS",  "league": "baseball/mlb", "team": "sea",
      "primary": "#0C2C56", "secondary": "#005C5C"},
     {"name": "SEAHAWKS",  "league": "football/nfl", "team": "sea",
@@ -97,9 +97,9 @@ TEAMS = [
     {"name": "KRAKEN",    "league": "hockey/nhl", "team": "sea",
      "primary": "#001628", "secondary": "#99D9D9"},
     {"name": "DUCKS",     "league": "hockey/nhl", "team": "ana",
-     "primary": "#F47A38", "secondary": "#111111"},
+     "primary": "#FC4C02", "secondary": "#B9975B"},
     {"name": "SEA LIONS", "league": "basketball/mens-college-basketball", "team": "2500",
-     "primary": "#0C5C36", "secondary": "#F5A623", "final_only": True},
+     "primary": "#0E553F", "secondary": "#FFC627", "final_only": True},
 ]
 
 # ---------------------------------------------------------------- colors (R, G, B)
