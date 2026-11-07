@@ -12,7 +12,7 @@ PANEL = {
 }
 
 # ---------------------------------------------------------------- start-up
-VERSION = "V2"          # shown on the start-up screen
+VERSION = "V2.6"          # shown on the start-up screen
 STARTUP_SPLASH = True   # BILLY5000 boot + logo screen when the clock launches
 
 # ---------------------------------------------------------------- ship's bells
@@ -196,10 +196,8 @@ FLAG_GUESS_SECONDS = 10       # flag alone, time to guess
 FLAG_REVEAL_SECONDS = 6       # name showing
 FLAG_REVEAL_STYLE = "stamp"   # "plate", "box", "corner" or "stamp"
 FLAG_COUNTDOWN_BAR = True     # thin timer line along the bottom while guessing
-NAUTICAL_FLAGS_IN_QUIZ = True # mix the 36 signal flags (A-Z with meanings, 0-9 pennants) into the deck;
-                              # these show the answer right away (no guessing)
-# One flag per lap, right after sports. Each round is a fresh random order (no repeats
-# until all have shown) so there's no sequence to learn. Remove a name to drop that flag.
+# FLAG GAME (countries + states): one per lap, right after sports. Each round is a fresh
+# random order (no repeats until all have shown). Remove a name to drop that flag.
 FLAG_QUIZ_COUNTRIES = [
     "MALI", "REPUBLIC OF THE CONGO", "LITHUANIA", "BAHRAIN", "BAHAMAS", "BARBADOS",
     "BANGLADESH", "BOTSWANA", "BULGARIA", "CAMEROON", "CHAD", "CHILE", "COSTA RICA",
@@ -221,3 +219,8 @@ FLAG_QUIZ_COUNTRIES = [
     "SOUTH AFRICA", "LEBANON",
 ]
 
+# ---------------------------------------------------------------- nautical lesson
+# A teaching page (no guessing): one signal flag every lap, after the flag game,
+# with its letter, radio name and meaning. A-Z, then the 0-9 pennants.
+NAUTICAL_LESSON_ON = True
+NAUTICAL_ORDER = "alphabet"    # "alphabet" (A, B, C... remembers its place) or "random"

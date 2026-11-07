@@ -16,7 +16,7 @@ import time
 
 import settings
 from engine import santa
-from engine.bitfonts import F3
+from engine.bitfonts import F3, F3_NARROW
 from engine.specialdays import Frame
 from engine.teamcolors import mix
 from .base import Page
@@ -98,8 +98,9 @@ def _logo(f, t):
     if t > 1.7:
         sub = f"WORLD CLOCK {settings.VERSION}".strip()
         n = min(len(sub), int((t - 1.7) * 14))
-        x0 = 32 - Frame.width(F3, sub) // 2
-        f.text(F3, sub[:n], x0, 24, GOLD)
+        font = F3 if Frame.width(F3, sub) <= 63 else F3_NARROW   # long versions use the slimmer font
+        x0 = 32 - Frame.width(font, sub) // 2
+        f.text(font, sub[:n], x0, 24, GOLD)
 
 
 def draw_splash(canvas, t):

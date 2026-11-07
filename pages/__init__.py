@@ -10,7 +10,7 @@ from .seattle_weather import SeattleNow, SeattleHourly, SeattleDaily
 from .special import SpecialSlot, Countdown, MAX_SLOTS
 from .startup import StartupSplash
 from .bells import ShipsBells
-from .flagquiz import FlagQuiz
+from .flagquiz import FlagQuiz, NauticalLesson
 
 
 SANTA_RADAR = SantaRadar()
@@ -52,9 +52,11 @@ def build_rotation():
     if settings.SPORTS_ON:
         lineup.extend(SportsPage(cfg) for cfg in settings.TEAMS)
 
-    # One flag-quiz flag per lap, right after sports.
+    # End of every lap: one flag-game flag (countries/states), then one nautical lesson.
     if settings.FLAG_QUIZ_ON:
         lineup.append(FlagQuiz())
+    if settings.NAUTICAL_LESSON_ON:
+        lineup.append(NauticalLesson())
     return lineup
 
 

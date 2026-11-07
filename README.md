@@ -71,5 +71,6 @@ journalctl -u billy5000 -f                # watch the log
 - [x] Sports block (ESPN), including the ITFDB flash
 - [x] Santa Alert (ELFNET / TOY)
 - [ ] Ship's watch names
-- [x] Flag quiz: 87 countries, 7 US states, 26 nautical letter flags + 10 numeral pennants
+- [x] Flag game: 87 countries + 7 US states (random, guess then stamp)
+- [x] Nautical lesson: 26 letter flags + 10 numeral pennants, one per lap, A-Z then 0-9
 - [ ] Calendar

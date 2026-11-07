@@ -220,8 +220,6 @@ class FlagQuiz(Page):
         if not self.deck:
             # a fresh random order every round, so there's no sequence to memorize
             self.deck = [n for n in settings.FLAG_QUIZ_COUNTRIES if n in FLAGS]
-            if settings.NAUTICAL_FLAGS_IN_QUIZ:
-                self.deck += [f"SIGNAL {letter}" for letter in SIGNALS]
             random.shuffle(self.deck)
             if len(self.deck) > 1 and self.deck[-1] == self.name:
                 self.deck[0], self.deck[-1] = self.deck[-1], self.deck[0]   # no back-to-back repeat
@@ -233,3 +231,48 @@ class FlagQuiz(Page):
     def draw(self, canvas, now, t):
         draw_quiz(canvas, self.name, t)
 
+
+
+class NauticalLesson(Page):
+    """Teaching page: one signal flag every lap, answer shown right away.
+    Goes A-Z then 0-9 (or random, see NAUTICAL_ORDER) and remembers its place
+    across restarts in state/nautical.txt."""
+
+    STATE = __import__("pathlib").Path(__file__).resolve().parent.parent / "state" / "nautical.txt"
+
+    def __init__(self):
+        self.order = list(SIGNALS)
+        self.i = self._load()
+        self.letter = None
+
+    def _load(self):
+        try:
+            return int(self.STATE.read_text().strip())
+        except Exception:
+            return 0
+
+    def _save(self):
+        try:
+            self.STATE.parent.mkdir(exist_ok=True)
+            self.STATE.write_text(str(self.i))
+        except Exception:
+            pass        # never let a save problem stop the clock
+
+    @property
+    def seconds(self):
+        return meaning_seconds(self.letter) if self.letter else 6
+
+    def is_active(self, now):
+        if not settings.NAUTICAL_LESSON_ON:
+            return False
+        if settings.NAUTICAL_ORDER == "random":
+            choices = [k for k in self.order if k != self.letter]
+            self.letter = random.choice(choices)
+        else:
+            self.letter = self.order[self.i % len(self.order)]
+            self.i = (self.i + 1) % len(self.order)
+            self._save()
+        return True
+
+    def draw(self, canvas, now, t):
+        draw_signal_quiz(canvas, self.letter, t)

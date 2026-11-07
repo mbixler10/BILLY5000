@@ -8,6 +8,7 @@ Fake alerts: python main.py --demo-alerts              (preview the red alert lo
 Fake sports: python main.py --demo-sports              (preview the sports pages)
 ITFDB test:  python main.py --demo-itfdb               (play the Dodgers flash now)
 Weather:     python main.py --demo-weather             (sample Seattle forecast)
+Flag test:   python main.py --flag "SIGNAL B"          (or --flag JAPAN, or --flag signals)
 Bells test:  python main.py --demo-bells               (strike the ship's bells now)
 Santa test:  python main.py --demo-santa               (run a TOY alert now; add --at for other dates)
 """
@@ -23,6 +24,17 @@ from engine import weather, alerts, sports, seattle_weather
 from pages import build_rotation, TAKEOVERS, SANTA_ALERT, SHIPS_BELLS
 
 FPS = 20
+
+
+def flag_preview(which):
+    """--flag: loop the flag quiz on just one flag, or every signal flag."""
+    from pages.flagquiz import FlagQuiz
+    from engine.nautical import SIGNALS
+    q = FlagQuiz()
+    names = ([f"SIGNAL {k}" for k in SIGNALS] if which.lower() == "signals"
+             else [which.upper()])
+    q.deck = list(reversed(names)) * 50
+    return q
 log = logging.getLogger("billy5000")
 
 
@@ -50,6 +62,9 @@ def main():
                     help="use a sample Seattle forecast to preview the weather pages")
     ap.add_argument("--demo-bells", action="store_true",
                     help="strike the ship's bells right after startup")
+    ap.add_argument("--flag", metavar="NAME",
+                    help='preview flag quiz pages only, e.g. --flag "SIGNAL B", --flag JAPAN, '
+                         'or --flag signals for all signal flags')
     ap.add_argument("--at", help='pretend it is this time, e.g. "2026-12-24 18:00"')
     args = ap.parse_args()
 
@@ -58,6 +73,8 @@ def main():
     now = make_clock(args.at)
     display = Display(settings.PANEL)
     lineup = build_rotation()
+    if args.flag:
+        lineup = [flag_preview(args.flag)]
     weather.start()
     if args.demo_weather:
         seattle_weather.demo()
