@@ -65,6 +65,7 @@ def _game(event_id, date, comp):
         teams.append({
             "id": str(team.get("id", "")),
             "abbr": team.get("abbreviation", "?").upper(),
+            "school": (team.get("location") or team.get("displayName") or "").upper(),
             "home": c.get("homeAway") == "home",
             "score": _score(c.get("score")),
             "winner": c.get("winner"),
@@ -201,6 +202,10 @@ def _learn_colors(cfg, t):
     for game in (live, nxt, last):
         for tm in (game or {}).get("teams", []):
             if tm["id"] != t["our_id"] and teamcolors.needs_lookup(cfg["league"], tm["abbr"]):
+                pinned = teamcolors.college_override(tm.get("school", ""))
+                if pinned:                       # colors we set by hand win over ESPN's
+                    teamcolors.remember(cfg["league"], tm["abbr"], pinned)
+                    continue
                 try:
                     data = _get(f"{cfg['league']}/teams/{tm['id']}")
                     teamcolors.remember(cfg["league"], tm["abbr"], data.get("team", {}))
@@ -255,7 +260,7 @@ def _demo():
         "TROJANS": g("USC", "UCLA", True, "post", "34", "17", "FINAL", now - timedelta(hours=5)),
         "KRAKEN": g("SEA", "VAN", False, "in", "1", "1", "2ND 8:14"),
         "NAVY": g("NAVY", "ARMY", False, "post", "17", "20", "FINAL", now - timedelta(hours=5)),
-        "SEA LIONS": g("PLNU", "AZU", True, "post", "78", "71", "FINAL", now - timedelta(hours=6)),
+        "SEA LIONS": g("PLNU", "WASH", False, "post", "78", "71", "FINAL", now - timedelta(hours=6)),
     }
     with _lock:
         for name, events in fake.items():

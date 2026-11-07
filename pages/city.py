@@ -54,10 +54,16 @@ class CityPage(Page):
                       settings.COLOR_ALERT_BAR, settings.COLOR_ALERT_TEXT)
         else:
             text(canvas, "5x7", 1, 7, code_c, self.code)
-            # weekday + that city's own date, e.g. "SAT 11/07"
-            day = local.strftime("%a").upper() + local.strftime(" %m/%d") if settings.CITY_DATE_ON \
-                else local.strftime("%a").upper()
-            text(canvas, "5x7", 64 - 1 - 5 * len(day), 7, day_c, day)
+            # weekday + that city's own date, e.g. "SAT 11/07", pushed to the right
+            # edge with a tighter gap so it doesn't crowd the airport code
+            day = local.strftime("%a").upper()
+            right = 64
+            if settings.CITY_DATE_ON:
+                date = local.strftime("%m/%d")
+                right -= text_width("5x7", date)
+                text(canvas, "5x7", right, 7, day_c, date)
+                right -= 2
+            text(canvas, "5x7", right - text_width("5x7", day), 7, day_c, day)
 
         hhmm = f"{local.hour % 12 or 12}:{local.minute:02d}"
         time_color = am_c if local.hour < 12 else pm_c

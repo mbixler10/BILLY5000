@@ -124,6 +124,22 @@ def resolve(league, abbr, api_color=None, api_alt=None):
     return hexc(api_color, (85, 85, 85)), hexc(api_alt, (200, 200, 200))
 
 
+# College opponents ESPN may not have colors for (small schools, Division II).
+# Keyed by school name as ESPN spells it; (primary, secondary).
+COLLEGE_COLORS = {
+    "WASHBURN": ("#003A70", "#FFFFFF"),          # Ichabods: Yale blue and white
+    "GANNON": ("#B20838", "#FCB041"),            # Golden Knights: maroon and gold
+}
+
+
+def college_override(school):
+    s = school.upper()
+    for name, (prim, sec) in COLLEGE_COLORS.items():
+        if s == name or s.startswith(name + " "):
+            return {"color": prim.lstrip("#"), "alternateColor": sec.lstrip("#")}
+    return None
+
+
 def needs_lookup(league, abbr):
     return league.startswith(("football/college", "basketball/")) and (league, abbr) not in _college
 
