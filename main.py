@@ -10,6 +10,7 @@ ITFDB test:  python main.py --demo-itfdb               (play the Dodgers flash n
 Weather:     python main.py --demo-weather             (sample Seattle forecast)
 Flag test:   python main.py --flag "SIGNAL B"          (or --flag JAPAN, or --flag signals)
 Bells test:  python main.py --demo-bells               (strike the ship's bells now)
+Lighthouse:  python main.py --lighthouse "NORTH HEAD"     (or --lighthouse all)
 Santa test:  python main.py --demo-santa               (run a TOY alert now; add --at for other dates)
 """
 import argparse
@@ -35,6 +36,21 @@ def flag_preview(which):
              else [which.upper()])
     q.deck = list(reversed(names)) * 50
     return q
+
+
+def lighthouse_preview(which):
+    """--lighthouse: loop the lighthouse lesson on one lighthouse, or all of them."""
+    from pages.lighthouse import LighthouseSlot, PICKER
+    from engine.lighthouses import LIGHTHOUSES, get
+    slot = LighthouseSlot()
+    PICKER.pick = slot.i
+    rows = list(LIGHTHOUSES) if which.lower() == "all" else [get(which.upper())]
+    if rows == [None]:
+        raise SystemExit("No lighthouse called %r - see engine/lighthouses.py" % which)
+    PICKER.deck = list(reversed(rows)) * 50
+    return slot
+
+
 log = logging.getLogger("billy5000")
 
 
@@ -65,6 +81,8 @@ def main():
     ap.add_argument("--flag", metavar="NAME",
                     help='preview flag quiz pages only, e.g. --flag "SIGNAL B", --flag JAPAN, '
                          'or --flag signals for all signal flags')
+    ap.add_argument("--lighthouse", metavar="NAME",
+                    help='preview the lighthouse lesson only, e.g. --lighthouse "NORTH HEAD" or --lighthouse all')
     ap.add_argument("--at", help='pretend it is this time, e.g. "2026-12-24 18:00"')
     args = ap.parse_args()
 
@@ -75,6 +93,8 @@ def main():
     lineup = build_rotation()
     if args.flag:
         lineup = [flag_preview(args.flag)]
+    if args.lighthouse:
+        lineup = [lighthouse_preview(args.lighthouse)]
     weather.start()
     if args.demo_weather:
         seattle_weather.demo()

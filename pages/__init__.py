@@ -11,6 +11,7 @@ from .special import SpecialSlot, Countdown, MAX_SLOTS
 from .startup import StartupSplash
 from .bells import ShipsBells
 from .flagquiz import FlagQuiz, NauticalLesson
+from .lighthouse import LapStart, LighthouseSlot
 
 
 SANTA_RADAR = SantaRadar()
@@ -43,9 +44,14 @@ def build_rotation():
         groups.append(home)
         groups.extend(others[i:i + step])
 
-    lineup = []
+    # The lighthouse lesson shows once per lap at a random spot: a hidden slot
+    # waits after every group, and LapStart picks which one gets it this lap.
+    # (Never between a city and its alert page, never inside the sports block.)
+    lineup = [LapStart()]
     for g in groups:
         lineup.extend(g)
+        if settings.LIGHTHOUSE_LESSON_ON:
+            lineup.append(LighthouseSlot())
 
     # Sports run as one block at the end of each lap, no Home pages in between.
     # Teams that are out of season skip themselves.
@@ -57,6 +63,8 @@ def build_rotation():
         lineup.append(FlagQuiz())
     if settings.NAUTICAL_LESSON_ON:
         lineup.append(NauticalLesson())
+    if settings.LIGHTHOUSE_LESSON_ON:
+        lineup.append(LighthouseSlot())
     return lineup
 
 

@@ -225,3 +225,10 @@ FLAG_QUIZ_COUNTRIES = [
 # with its letter, radio name and meaning. A-Z, then the 0-9 pennants.
 NAUTICAL_LESSON_ON = True
 NAUTICAL_ORDER = "alphabet"    # "alphabet" (A, B, C... remembers its place) or "random"
+
+# ----------------------------------------------------------------- lighthouses
+# Night-navigation lesson: once per lap, at a random spot, a lighthouse blinks
+# its real pattern. The lighthouses themselves live in engine/lighthouses.py.
+LIGHTHOUSE_LESSON_ON = True
+LIGHTHOUSE_MIN_SECONDS = 14       # shortest a lighthouse stays up
+LIGHTHOUSE_LIST = []              # [] = all of them, or names like ["NORTH HEAD", "ALKI POINT"]
