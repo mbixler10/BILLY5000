@@ -89,7 +89,7 @@ def _power_on(f, t):
 
 LEAGUES = {"baseball/mlb": "MLB", "football/nfl": "NFL", "hockey/nhl": "NHL",
            "football/college-football": "NCAAF", "basketball/mens-college-basketball": "NCAAB"}
-SHORT_NAMES = {"SEA LIONS": "PLNU"}
+SHORT_NAMES = {}
 
 
 def _led_bright(c, floor=170):

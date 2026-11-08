@@ -260,7 +260,6 @@ def _demo():
         "TROJANS": g("USC", "UCLA", True, "post", "34", "17", "FINAL", now - timedelta(hours=5)),
         "KRAKEN": g("SEA", "VAN", False, "in", "1", "1", "2ND 8:14"),
         "NAVY": g("NAVY", "ARMY", False, "post", "17", "20", "FINAL", now - timedelta(hours=5)),
-        "SEA LIONS": g("PLNU", "WASH", False, "post", "78", "71", "FINAL", now - timedelta(hours=6)),
     }
     with _lock:
         for name, events in fake.items():

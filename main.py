@@ -21,7 +21,7 @@ from datetime import datetime
 
 import settings
 from engine.display import Display
-from engine import weather, alerts, sports, seattle_weather
+from engine import weather, alerts, sports, seattle_weather, medals
 import pages
 from pages import build_rotation, TAKEOVERS, SANTA_ALERT, SHIPS_BELLS
 
@@ -102,6 +102,7 @@ def main():
     else:
         seattle_weather.start()
     alerts.start(demo_mode=args.demo_alerts)
+    medals.start()
     sports.start(demo_mode=args.demo_sports)
     if args.demo_itfdb:
         sports.trigger_itfdb()

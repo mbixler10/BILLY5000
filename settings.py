@@ -12,7 +12,7 @@ PANEL = {
 }
 
 # ---------------------------------------------------------------- start-up
-VERSION = "V3.3"          # shown on the start-up screen
+VERSION = "V3.4"          # shown on the start-up screen
 STARTUP_SPLASH = True   # BILLY5000 boot + logo screen when the clock launches
 
 # ---------------------------------------------------------------- ship's bells
@@ -104,8 +104,6 @@ TEAMS = [
      "primary": "#001628", "secondary": "#99D9D9", "check": "secondary"},
     {"name": "DUCKS",     "league": "hockey/nhl", "team": "ana",
      "primary": "#FC4C02", "secondary": "#B9975B"},
-    {"name": "SEA LIONS", "league": "basketball/mens-college-basketball", "team": "2500",
-     "primary": "#0E553F", "secondary": "#FFC627", "final_only": True},
 ]
 
 # ---------------------------------------------------------------- colors (R, G, B)
@@ -293,7 +291,14 @@ OLYMPICS_TRIBUTE = {
               "LOS ANGELES 1932, THE XTH OLYMPIAD - LA MEMORIAL COLISEUM",
 }
 # Upcoming Games: (short name, ticker name, opening ceremony, closing day,
-# time zone of the opening). Add the next ones as they get close.
+# time zone of the opening, Wikipedia medal table page). Add the next ones as
+# they get close.
 OLYMPICS = [
-    ("LA28", "THE LOS ANGELES OLYMPICS", "2028-07-14 17:00", "2028-07-30", "America/Los_Angeles"),
+    ("LA28", "THE LOS ANGELES OLYMPICS", "2028-07-14 17:00", "2028-07-30", "America/Los_Angeles",
+     "2028 Summer Olympics medal table"),
 ]
+# During the Games the Olympic page shows every lap, with the medal table
+# (top 4, plus Team USA if it isn't in the top 4). It stays a few days after.
+MEDALS_ON = False               # on hold for now
+MEDALS_SECONDS = 12
+MEDALS_AFTER_DAYS = 3

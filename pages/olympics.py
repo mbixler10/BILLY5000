@@ -4,7 +4,7 @@ During the Games it switches to "DAY 5 OF 17", and on opening day "TODAY!".
 Shows every OLYMPICS_EVERY_LAPS laps (see settings), at the end of the lap.
 """
 import math
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from zoneinfo import ZoneInfo
 
 import settings
@@ -12,6 +12,7 @@ from engine.bitfonts import F3, F5
 from engine.specialdays import Frame
 from .base import Page
 from .lighthouse import PICKER
+from engine import medals
 
 RING_COLORS = [(0, 129, 200), (210, 210, 220), (238, 51, 78),      # blue, black (white on LEDs), red
                (252, 177, 49), (0, 166, 81)]                         # yellow, green
@@ -40,12 +41,29 @@ def draw_rings(f, cx, top, t):
 def next_games(now):
     """(games row, opening datetime, closing date) for the next or current Games."""
     for row in settings.OLYMPICS:
-        short, name, opening, closing, tz = row
+        short, name, opening, closing, tz = row[:5]
         z = ZoneInfo(tz)
         open_dt = datetime.fromisoformat(opening).replace(tzinfo=z)
         close_d = date.fromisoformat(closing)
         if now.astimezone(z).date() <= close_d:
             return row, open_dt, close_d
+    return None
+
+
+def medal_window(now):
+    """(games row, final?) while the Games are on and for a few days after;
+    None otherwise. Only for Games that list a medal table page."""
+    if not getattr(settings, "MEDALS_ON", False):
+        return None
+    for row in settings.OLYMPICS:
+        if len(row) < 6 or not row[5]:
+            continue
+        z = ZoneInfo(row[4])
+        open_dt = datetime.fromisoformat(row[2]).replace(tzinfo=z)
+        close_d = date.fromisoformat(row[3])
+        today = now.astimezone(z).date()
+        if open_dt.date() <= today <= close_d + timedelta(days=settings.MEDALS_AFTER_DAYS):
+            return row, today > close_d
     return None
 
 
@@ -166,22 +184,91 @@ def tribute_seconds():
     return max(10, scroll_seconds(tr["ticker"])) if tr else 0
 
 
+# ------------------------------------------------------------------ medal table
+SILVER = (200, 205, 215)
+BRONZE = (205, 120, 50)
+GREY = (120, 120, 130)
+USA_BLUE = (110, 160, 255)
+
+
+def ranked(table):
+    """Add Olympic ranks (by golds, then silvers, then bronzes; ties share a rank)."""
+    out, prev = [], None
+    for i, (code, name, g, s, b) in enumerate(table, 1):
+        key = (g, s, b)
+        rank = out[-1][0] if prev == key else i
+        out.append((rank, code, g, s, b))
+        prev = key
+    return out
+
+
+def draw_medals(canvas, t, final):
+    table, _ = medals.get()
+    rows = ranked(table)
+    f = Frame()
+    f.text(F3, "FINAL" if final else "MEDALS", 1, 0, GOLD)
+    for label, x, c in (("G", 38, GOLD), ("S", 49, SILVER), ("B", 60, BRONZE)):
+        f.text(F3, label, x, 0, c)
+    show = rows[:4]
+    usa = next((r for r in rows if r[1] == "USA"), None)
+    if usa and usa not in show:                       # Team USA always on the board
+        show = rows[:3] + [usa]
+        for x in range(1, 63, 2):
+            f.set(x, 23, (50, 50, 70))
+    for k, (rank, code, g, s, b) in enumerate(show):
+        y = 6 + k * 6
+        rk = str(rank)
+        f.text(F3, rk, 8 - Frame.width(F3, rk), y, GREY)
+        f.text(F3, code, 11, y, USA_BLUE if code == "USA" else WHITE)
+        for n, right, c in ((g, 41, GOLD), (s, 52, SILVER), (b, 63, BRONZE)):
+            v = str(n)
+            f.text(F3, v, right - Frame.width(F3, v), y, c)
+    f.flush(canvas)
+
+
+def medals_ready(now):
+    w = medal_window(now)
+    return w if (w and medals.get()[0]) else None
+
+
 class OlympicCountdown(Page):
-    """Countdown first, then the tribute card to Great-Grandpa."""
+    """Countdown (or DAY 6 OF 17 during the Games), then the medal table while
+    the Games are on, then the tribute card to Great-Grandpa."""
+
+    def _parts(self, now):
+        parts = []
+        if status(now):
+            parts.append(("countdown", countdown_seconds(now)))
+        w = medals_ready(now)
+        if w:
+            parts.append(("medals", settings.MEDALS_SECONDS))
+        if settings.OLYMPICS_TRIBUTE:
+            parts.append(("tribute", tribute_seconds()))
+        return parts
 
     @property
     def seconds(self):
-        return countdown_seconds(datetime.now().astimezone()) + tribute_seconds()
+        return sum(d for _, d in self._parts(datetime.now().astimezone()))
 
     def is_active(self, now):
-        if not settings.OLYMPICS_ON or status(now) is None:
+        if not settings.OLYMPICS_ON:
             return False
-        every = max(1, settings.OLYMPICS_EVERY_LAPS)
+        w = medal_window(now)
+        medals.want(w[0][5] if w else None)            # keep the medal table fresh
+        if status(now) is None and not medals_ready(now):
+            return False
+        games_on = w is not None
+        every = 1 if games_on else max(1, settings.OLYMPICS_EVERY_LAPS)
         return PICKER.lap % every == 0
 
     def draw(self, canvas, now, t):
-        first = countdown_seconds(now)
-        if t < first or not settings.OLYMPICS_TRIBUTE:
+        for kind, d in self._parts(now):
+            if t < d:
+                break
+            t -= d
+        if kind == "countdown":
             draw_olympics(canvas, now, t)
+        elif kind == "medals":
+            draw_medals(canvas, t, medal_window(now)[1])
         else:
-            draw_tribute(canvas, t - first)
+            draw_tribute(canvas, t)
