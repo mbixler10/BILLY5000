@@ -326,6 +326,7 @@ MESSAGES = [
     ("HO HO HO!", "SEE YOU SOON"),
 ]
 
+
 # Test-flight sightings around the Arctic: (code, name max 12, lat, lon).
 # Each test flight picks one, plots it on a polar radar (North Pole in the
 # middle, dashed ring = Arctic Circle) and shows the sleigh's speed in Mach.
@@ -944,6 +945,7 @@ def _make_broken_cheer():
             junk = junk if len(junk) <= 3 else junk
             _big(canvas, 26, rng.choice((RED, GOLD, GREEN)), junk[:3], 64 - 3 * BIG_W)
     return scene
+
 
 
 def _scene_end(canvas, t):

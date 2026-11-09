@@ -1,7 +1,8 @@
 """
 Sports pages, in the same layout as the old clock (test32.py):
 
-    [LAD ▌]  @  [▐ SF ]     <- team chips: team color, stripe on the outside edge
+    [LAD ▌]  @  [▐ SF ]     <- away team left, home team right; "@" when we're
+                               away, "VS" when we're home
       3          2          <- big double-size scores (live / final)
     • LIVE TOP 7TH          <- small text; "FINAL" after the game
 
@@ -111,15 +112,19 @@ class SportsPage(Page):
         them = next((tm for tm in game["teams"] if tm is not us), game["teams"][-1])
         opp_prim, opp_sec = resolve(self.cfg["league"], them["abbr"], them["color"], them["alt"])
 
-        team_chip(canvas, us["abbr"][:4], hexc(self.cfg["primary"]),
-                  hexc(self.cfg["secondary"]), 0, 26)
-        team_chip(canvas, them["abbr"][:4], opp_prim, opp_sec, 37, 63)
+        # Away team on the left, home team on the right (like a scoreboard).
+        # Our team away: "@".  Our team at home: "VS".
+        ours = (us["abbr"][:4], hexc(self.cfg["primary"]), hexc(self.cfg["secondary"]), us)
+        theirs = (them["abbr"][:4], opp_prim, opp_sec, them)
+        left, right = (theirs, ours) if us["home"] else (ours, theirs)
+        team_chip(canvas, left[0], left[1], left[2], 0, 26)
+        team_chip(canvas, right[0], right[1], right[2], 37, 63)
         vs = "VS" if us["home"] else "@"
         draw(canvas, F3, vs, 32 - width(F3, vs) // 2, 2, DIM)
 
         if kind in ("live", "final"):
-            big_score(canvas, us["score"] or "0", left=True)
-            big_score(canvas, them["score"] or "0", left=False)
+            big_score(canvas, left[3]["score"] or "0", left=True)
+            big_score(canvas, right[3]["score"] or "0", left=False)
             if kind == "live":
                 if now.timestamp() % 1.2 < 0.6:          # blinking red dot
                     fill(canvas, 2, 27, 2, 2, RED)
