@@ -6,7 +6,6 @@ from .city import CityPage
 from .alert import AlertPage
 from .sports import SportsPage, ItfdbFlash
 from .santa import SantaAlert, SantaRadar
-from .vinny import VinnyAlert
 from .seattle_weather import SeattleNow, SeattleHourly, SeattleDaily
 from .special import SpecialSlot, Countdown, MAX_SLOTS
 from .startup import StartupSplash
@@ -82,9 +81,8 @@ def build_rotation():
 # Pages that take over the whole screen the moment they're active,
 # no matter what's showing.
 SANTA_ALERT = SantaAlert()
-VINNY_ALERT = VinnyAlert()
 SHIPS_BELLS = ShipsBells()
 # First match wins, so ITFDB and Santa outrank the bells. The 9/11 reading of
 # the names outranks everything except the start-up screen.
 from engine.specialdays import READING as NAMES_911
-TAKEOVERS = [StartupSplash(), NAMES_911, ItfdbFlash(), SANTA_ALERT, VINNY_ALERT, SHIPS_BELLS]
+TAKEOVERS = [StartupSplash(), NAMES_911, ItfdbFlash(), SANTA_ALERT, SHIPS_BELLS]
