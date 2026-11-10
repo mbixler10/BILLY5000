@@ -1,0 +1,20 @@
+# ---------------------------------------------------------------------------
+# YOUR OWN VINNY MESSAGES
+# The board reads this file on its own - just save it (no restart needed).
+#
+# One message per line:
+#     DATE     TIME    FROM    line 1 | line 2 | line 3 | line 4
+#
+#   DATE   2026-12-05  = that one day        12-05 = every year on Dec 5
+#   TIME   10:30 (24-hour clock)  or  -  to let it take the early-afternoon slot
+#   FROM   VINNY (a report from him)  or  SANTA (a message to him)
+#   Up to 6 lines, 12 characters each (longer lines get cut off).
+#   A # starts a note; the board ignores it.
+#
+# Check what the board will read:   python -m engine.vinny check
+# ---------------------------------------------------------------------------
+
+# Examples - delete the # at the start of a line to turn it on:
+# 2026-12-05  -      VINNY   BILLY SAID | "SANTA!" | FIRST TIME! | SO PROUD.
+# 12-20       17:00  SANTA   TELL BILLY | GOOD JOB AT | THE DENTIST!
+# 12-14       -      VINNY   SNOW TODAY! | REAL SNOW. | IN SEATTLE.

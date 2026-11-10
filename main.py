@@ -12,6 +12,8 @@ Flag test:   python main.py --flag "SIGNAL B"          (or --flag JAPAN, or --fl
 Bells test:  python main.py --demo-bells               (strike the ship's bells now)
 Lighthouse:  python main.py --lighthouse "NORTH HEAD"     (or --lighthouse all)
 Santa test:  python main.py --demo-santa               (run a TOY alert now; add --at for other dates)
+Vinny test:  python main.py --demo-vinny intercept     (one of Vinny's ELFNET transmissions now)
+             python -m engine.vinny 2026-12-10         (Vinny's schedule for a day)
 """
 import argparse
 import logging
@@ -23,7 +25,7 @@ import settings
 from engine.display import Display
 from engine import weather, alerts, sports, seattle_weather, medals
 import pages
-from pages import build_rotation, TAKEOVERS, SANTA_ALERT, SHIPS_BELLS
+from pages import build_rotation, TAKEOVERS, SANTA_ALERT, VINNY_ALERT, SHIPS_BELLS
 
 FPS = 20
 
@@ -75,6 +77,9 @@ def main():
                     help="play the Dodgers ITFDB flash right at startup")
     ap.add_argument("--demo-santa", action="store_true",
                     help="run a Santa TOY alert right at startup")
+    ap.add_argument("--demo-vinny", metavar="KIND", nargs="?", const="any",
+                    help="play one of Agent Vinny's ELFNET transmissions now: sitrep, intel, "
+                         "santa, orders, post, intercept, arrival, eve_report, xmas (default: random)")
     ap.add_argument("--demo-weather", action="store_true",
                     help="use a sample Seattle forecast to preview the weather pages")
     ap.add_argument("--demo-bells", action="store_true",
@@ -108,6 +113,8 @@ def main():
         sports.trigger_itfdb()
     if args.demo_santa:
         SANTA_ALERT.force = True
+    if args.demo_vinny:
+        VINNY_ALERT.force = args.demo_vinny
     if args.demo_bells:
         SHIPS_BELLS.force = True
 
