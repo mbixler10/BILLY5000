@@ -12,8 +12,9 @@ PANEL = {
 }
 
 # ---------------------------------------------------------------- start-up
-VERSION = "V3.9"          # shown on the start-up screen
+VERSION = "V4.0"          # shown on the start-up screen
 STARTUP_SPLASH = True   # BILLY5000 boot + logo screen when the clock launches
+STARTUP_PACE = 1.0      # start-up speed: 1.0 = easy to read (~26 s), 0.5 = quick, 1.5 = slower
 
 # ---------------------------------------------------------------- ship's bells
 BELLS_ON = True                # strike the bells every half hour (home time)
@@ -97,14 +98,28 @@ TEAMS = [
     {"name": "TROJANS",   "league": "football/college-football", "team": "usc",
      "primary": "#990000", "secondary": "#FFC72C"},
     {"name": "HUSKIES",   "league": "football/college-football", "team": "wash",
-     "primary": "#4B2E83", "secondary": "#B7A57A"},
+     "primary": "#4B2E83", "secondary": "#B7A57A", "check": "secondary"},
     {"name": "NAVY",      "league": "football/college-football", "team": "navy",
-     "primary": "#00205B", "secondary": "#C5B783"},
+     "primary": "#00205B", "secondary": "#C5B783", "check": "secondary"},
     {"name": "KRAKEN",    "league": "hockey/nhl", "team": "sea",
      "primary": "#001628", "secondary": "#99D9D9", "check": "secondary"},
     {"name": "DUCKS",     "league": "hockey/nhl", "team": "ana",
      "primary": "#FC4C02", "secondary": "#B9975B"},
 ]
+# Start-up screen: each team's row types out its rallying cry instead of a check mark.
+# name: (short tag, cry). Tag + cry must fit one row: about 12 letters together.
+# A team not listed here gets its league + name and a check mark.
+STARTUP_CHANTS = {
+    "DODGERS":  ("LAD",  "ITFDB"),
+    "MARINERS": ("SEA",  "GO M'S!"),
+    "SEAHAWKS": ("SEA",  "12S READY"),
+    "RAMS":     ("LAR",  "RAMS HOUSE"),
+    "TROJANS":  ("USC",  "FIGHT ON!"),
+    "HUSKIES":  ("UW",   "BOW DOWN"),
+    "NAVY":     ("NAVY", "BEAT ARMY"),
+    "KRAKEN":   ("SEA",  "BUOY"),
+    "DUCKS":    ("ANA",  "QUACK!"),
+}
 
 # ---------------------------------------------------------------- colors (R, G, B)
 COLOR_CODE = (255, 160, 0)      # airport code

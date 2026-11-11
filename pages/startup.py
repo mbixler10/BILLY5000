@@ -1,17 +1,18 @@
 """
-BILLY5000 start-up screen: plays once, the moment the clock launches (about 12 s).
+BILLY5000 start-up screen: plays once, the moment the clock launches (about 26 s).
 
-  0.0 - 0.8 s  POWER-ON: the panel snaps on like an old CRT - a bright line,
-               it opens up, static fizzles out
-  0.8 - 5.8 s  SYSTEM CHECK: diagnostics scroll past (power bus, panel, Billy's
-               Buds, sat uplink, NOAA, ESPN, each team with a check in its own color, ITFDB,
-               ELFNET...); a few make you wait; progress bar fills to 100%
-  5.8 - 6.7 s  ALL SYSTEMS GO
-  6.7 - 6.9 s  white flash
-  6.9 -11.7 s  BILLY5000 logo: letters stamp in, shine sweeps across, rule line
-               grows, WORLD CLOCK + version types in
+  POWER-ON      the panel snaps on like an old CRT - a bright line, it opens up,
+                static fizzles out
+  SYSTEM CHECK  diagnostics scroll past (power bus, panel, Billy's Buds, sat uplink,
+                NOAA, ESPN, each team with a check in its own color, ITFDB, ELFNET...);
+                about half a second per line so you can read them; progress bar to 100%
+  ALL SYSTEMS GO
+  white flash
+  BILLY5000 logo: letters stamp in, shine sweeps across, rule line grows,
+                WORLD CLOCK + version types in, then holds
 
-Turn it off with STARTUP_SPLASH = False in settings.py.
+Speed: STARTUP_PACE in settings.py (1.0 = easy to read, 0.5 = quick, 1.5 = slower).
+Turn it off with STARTUP_SPLASH = False.
 """
 import time
 
@@ -22,7 +23,6 @@ from engine.specialdays import Frame
 from engine.teamcolors import mix, hexc
 from .base import Page
 
-SECONDS = 11.7
 AMBER = (255, 140, 0)
 GREEN = (0, 255, 60)
 WHITE = (242, 242, 242)
@@ -59,9 +59,23 @@ def _type(f, row, rgb, s, t, start, cps=16):
 CYAN = (64, 208, 255)
 RED = (255, 48, 48)
 DIM = (90, 90, 90)
-POWER_ON = 0.8
-CHECK_END = 5.8
-GO_END = 6.7
+ROW_SECONDS = 0.55      # how long each system-check line gets (at STARTUP_PACE 1.0)
+FLASH = 0.2
+
+
+def _pace():
+    return max(0.3, float(getattr(settings, "STARTUP_PACE", 1.0)))
+
+
+def timeline():
+    """(power-on end, check end, GO end, logo seconds, total) for the current pace."""
+    pace = _pace()
+    _, raw = _checks()
+    power = 1.2 * pace
+    check_end = power + raw * (ROW_SECONDS / 0.24) * pace + 0.6 * pace
+    go_end = check_end + 1.6 * pace
+    logo = 7.5 * pace
+    return power, check_end, go_end, logo, go_end + FLASH + logo
 
 
 def _noise(f, seed, density, top=0, bottom=31, level=1.0):
@@ -103,37 +117,46 @@ def _led_bright(c, floor=170):
 
 def _team_rows():
     rows = []
+    chants = getattr(settings, "STARTUP_CHANTS", {})
     for cfg in settings.TEAMS:
+        color = cfg["secondary"] if cfg.get("check") == "secondary" else cfg["primary"]
+        color = _led_bright(hexc(color))
+        if cfg["name"] in chants:
+            tag, cry = chants[cfg["name"]]
+            rows.append((tag, cry.upper(), color, 0.1, "chant"))
+            continue
         lg = LEAGUES.get(cfg["league"], "")
         name = SHORT_NAMES.get(cfg["name"], cfg["name"])
         label = f"{lg} {name}".strip()
         if Frame.width(F3, label) > 50:              # too long for the row: drop the league
             label = name
-        color = cfg["secondary"] if cfg.get("check") == "secondary" else cfg["primary"]
-        rows.append((label, "CHECK", _led_bright(hexc(color)), 0))
+        rows.append((label, "CHECK", color, 0, ""))
     return rows
+
+
+MEMTEST = 0.7      # raw seconds of RAM test before the first line
 
 
 def _checks():
     flags = len(getattr(settings, "FLAG_QUIZ_COUNTRIES", [])) + 36
     rows = [
-        ("POWER BUS", "OK", GREEN, 0),
-        ("PANEL 64X32", "OK", GREEN, 0),
-        ("FONT ROM", "OK", GREEN, 0),
-        ("CLOCK SYNC", "OK", GREEN, 0.35),          # a pause for drama
-        ("BILLY'S BUDS", "OK", GREEN, 0),
-        ("SAT UPLINK", "LOCK", CYAN, 0.45),
-        ("NOAA FEED", "OK", GREEN, 0),
-        ("ESPN FEED", "OK", GREEN, 0.25),
+        ("POWER BUS", "OK", GREEN, 0, ""),
+        ("PANEL 64X32", "OK", GREEN, 0, ""),
+        ("FONT ROM", "OK", GREEN, 0, ""),
+        ("CLOCK SYNC", "TIME", GREEN, 0.35, "clock"),     # shows the real time
+        ("BILLY'S BUDS", "BUDS", GREEN, 0.45, "buds"),    # counts the family cities
+        ("SAT UPLINK", "LOCK", CYAN, 0.55, "sats"),       # hunting for satellites
+        ("NOAA FEED", "OK", GREEN, 0, ""),
+        ("ESPN FEED", "OK", GREEN, 0.5, "retry"),         # one RETRY, then OK
     ] + _team_rows() + [
-        ("ITFDB", "ARMED", RED, 0),
-        ("SHIP BELL", "OK", GREEN, 0),
-        (f"{flags} FLAGS", "OK", GREEN, 0),
-        ("ELFNET", "SECURE", AMBER, 0.3),
+        ("ITFDB", "ARMED", RED, 0, ""),
+        ("SHIP BELL", "OK", GREEN, 0, ""),
+        (f"{flags} FLAGS", "OK", GREEN, 0, ""),
+        ("ELFNET", "SECURE", AMBER, 0.6, "stall"),        # the bar stalls at 90% for this one
     ]
-    out, at = [], 0.0
-    for label, status, color, wait in rows:
-        out.append((label, status, color, at, at + 0.12 + wait))
+    out, at = [], MEMTEST
+    for label, status, color, wait, kind in rows:
+        out.append((label, status, color, at, at + 0.14 + wait, kind))
         at += 0.24 + wait
     return out, at
 
@@ -141,47 +164,96 @@ def _checks():
 CHECKMARK = ["....#", "...#.", "#.#..", ".#..."]
 
 
+def _buds():
+    return len(settings.PLACES) + 1
+
+
+def _status_text(status, kind):
+    if kind == "clock":
+        from datetime import datetime
+        n = datetime.now()
+        return f"{n.hour % 12 or 12}:{n.minute:02d}"
+    if kind == "buds":
+        return f"{_buds()}/{_buds()}"
+    return status
+
+
+def _spinner(f, x, y, t, color):
+    k = int(t * 12) % 4
+    for dx, dy in [[(0, 2), (1, 2), (2, 2)], [(0, 1), (1, 2), (2, 3)],
+                   [(1, 1), (1, 2), (1, 3)], [(2, 1), (1, 2), (0, 3)]][k]:
+        f.set(x + dx, y + dy, color)
+
+
 def _system_check(f, t):
     rows, total = _checks()
-    scale = (CHECK_END - POWER_ON - 0.2) / total        # fit the list in the time we have
+    power, check_end, _, _, _ = timeline()
+    scale = (check_end - power - 0.6 * _pace()) / total  # half a second a line, then hold at 100%
     shown = [r for r in rows if t >= r[3] * scale]
     done = sum(1 for r in rows if t >= r[4] * scale)
     pct = min(100, int(100 * done / len(rows)))
+    if done < len(rows):
+        pct = min(pct, 90)                                # the classic stall near the end
 
-    # header: system name, spinner, percent
-    f.text(F3, "SYS CHECK", 1, 0, AMBER)
-    if pct < 100:
-        k = int(t * 12) % 4                           # spinner: - \\ | /
-        pts = [[(0, 2), (1, 2), (2, 2)], [(0, 0), (1, 2), (2, 4)],
-               [(1, 0), (1, 2), (1, 4)], [(2, 0), (1, 2), (0, 4)]][k]
-        for dx, dy in pts:
-            f.set(39 + dx, dy, AMBER)
-            if dy in (0, 4) and k in (1, 3):
-                pass
-        for dx, dy in [[(0, 2), (1, 2), (2, 2)], [(0, 1), (2, 3)], [(1, 1), (1, 3)], [(2, 1), (0, 3)]][k]:
-            f.set(39 + dx, dy, AMBER)
-    p = f"{pct}%"
-    f.text(F3, p, 62 - Frame.width(F3, p), 0, WHITE if pct < 100 else GREEN)
+    # header: RAM test first (fast hex count), then system name, spinner, percent
+    mem_end = MEMTEST * scale
+    if t < mem_end:
+        addr = min(0xFFFF, int(0xFFFF * t / mem_end))
+        f.text(F3, "RAM TEST", 1, 0, AMBER)
+        h = f"{addr:04X}"
+        f.text(F3, h, 62 - Frame.width(F3, h), 0, WHITE if t < mem_end * 0.9 else GREEN)
+        for i in range(3):                                # memory blocks filling in below
+            y = 9 + i * 6
+            cells = int(min(1.0, max(0.0, t / mem_end * 3 - i)) * 15)
+            for c in range(15):
+                col = (0, 120, 40) if c < cells else (25, 25, 30)
+                f.fill(2 + c * 4, y, 4 + c * 4, y + 3, col)
+    else:
+        f.text(F3, "SYS CHECK", 1, 0, AMBER)
+        if pct < 100:
+            _spinner(f, 39, 0, t, AMBER)
+        p = f"{pct}%"
+        f.text(F3, p, 62 - Frame.width(F3, p), 0, WHITE if pct < 100 else GREEN)
     f.fill(0, 6, 63, 6, (40, 30, 0))
 
     # log: last 3 lines, newest at the bottom
-    for i, (label, status, color, start, ok_at) in enumerate(shown[-3:]):
+    for i, (label, status, color, start, ok_at, kind) in enumerate(shown[-3:]):
         y = 8 + i * 6
         f.text(F3, label, 1, y, WHITE)
-        sx = 58 if status == "CHECK" else 62 - Frame.width(F3, status)
         lx = 1 + Frame.width(F3, label) + 2
-        for x in range(lx, sx - 2, 2):                  # leader dots
-            f.set(x, y + 4, DIM)
-        if t >= ok_at * scale:
-            if status == "CHECK":                       # a green check mark for each team
+        if t >= ok_at * scale:                            # result types in
+            if status == "CHECK":
+                sx = 58
                 for r, row in enumerate(CHECKMARK):
                     for q, ch in enumerate(row):
                         if ch == "#":
                             f.set(sx + q, y + r, color)
             else:
-                f.text(F3, status, sx, y, color)
-        elif int(t * 8) % 2 == 0:
-            f.text(F3, "....", 62 - Frame.width(F3, "...."), y, DIM)
+                full = _status_text(status, kind)
+                n = 1 + int((t - ok_at * scale) * 18)
+                font = F3 if lx + Frame.width(F3, full) + 2 <= 62 else F3_NARROW
+                sx = 62 - Frame.width(font, full)
+                f.text(font, full[:n], sx, y, color)
+        else:                                             # still working on it
+            work = (t - start * scale) / max(0.01, (ok_at - start) * scale)
+            sx = 56
+            if kind == "sats":
+                s_ = f"{min(12, 1 + int(work * 12))}/12"
+                sx = 62 - Frame.width(F3_NARROW, s_)
+                f.text(F3_NARROW, s_, sx, y, DIM)
+            elif kind == "buds":
+                s_ = f"{max(1, int(work * _buds()))}"
+                sx = 62 - Frame.width(F3, s_)
+                f.text(F3, s_, sx, y, DIM)
+            elif kind == "retry" and 0.3 < work < 0.75:
+                sx = 62 - Frame.width(F3, "RETRY")
+                if int(t * 6) % 2 == 0:
+                    f.text(F3, "RETRY", sx, y, AMBER)
+            else:
+                _spinner(f, 59, y, t, DIM)
+                sx = 58
+        for x in range(lx, sx - 2, 2):                    # leader dots
+            f.set(x, y + 4, DIM)
 
     # progress bar
     f.fill(0, 27, 63, 31, (25, 25, 30))
@@ -202,12 +274,13 @@ def _all_systems_go(f, t):
 
 
 def _boot(f, t):
-    if t < POWER_ON:
-        _power_on(f, t)
-    elif t < CHECK_END:
-        _system_check(f, t - POWER_ON)
+    power, check_end, _, _, _ = timeline()
+    if t < power:
+        _power_on(f, t * 0.8 / power)          # same CRT turn-on, played slower
+    elif t < check_end:
+        _system_check(f, t - power)
     else:
-        _all_systems_go(f, t - CHECK_END)
+        _all_systems_go(f, t - check_end)
 
 
 def _logo(f, t):
@@ -247,12 +320,13 @@ def _logo(f, t):
 
 def draw_splash(canvas, t):
     f = _Frame()
-    if t < GO_END:
+    _, _, go_end, logo, _ = timeline()
+    if t < go_end:
         _boot(f, t)
-    elif t < GO_END + 0.2:
-        f.bg = (255, 255, 255) if t < GO_END + 0.08 else (90, 90, 90)
+    elif t < go_end + FLASH:
+        f.bg = (255, 255, 255) if t < go_end + 0.08 else (90, 90, 90)
     else:
-        _logo(f, t - GO_END - 0.2)
+        _logo(f, (t - go_end - FLASH) * 4.8 / logo)   # same logo animation, stretched out
     f.flush(canvas)
 
 
@@ -266,7 +340,7 @@ class StartupSplash(Page):
             return False
         if self.started is None:
             self.started = time.monotonic()
-        if time.monotonic() - self.started >= SECONDS:
+        if time.monotonic() - self.started >= timeline()[4]:
             self.done = True
             return False
         return True
