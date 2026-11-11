@@ -14,6 +14,7 @@ from .bells import ShipsBells
 from .flagquiz import FlagQuiz, NauticalLesson
 from .lighthouse import LapStart, LighthouseSlot
 from .olympics import OlympicCountdown
+from .opening import OpeningCountdown, OpeningDayAlert, HomeRunFlash
 from .home import HomeCity, HomeAlert, HomeSantaRadar, GATE, shown
 
 
@@ -43,6 +44,8 @@ def build_rotation():
         lead += [[SeattleNow()], [SeattleHourly()], [SeattleDaily()]]
     if settings.SPECIAL_DAYS_ON and settings.COUNTDOWN_PAGE:
         lead += [[Countdown()]]
+    if settings.OPENING_DAY_MODE:          # days to Opening Day (skips itself off-season)
+        lead += [[OpeningCountdown()]]
     others = lead + others
 
     # Today's special pages (holiday greeting, birthdays, trash day...) open each lap,
@@ -84,7 +87,10 @@ def build_rotation():
 SANTA_ALERT = SantaAlert()
 VINNY_ALERT = VinnyAlert()
 SHIPS_BELLS = ShipsBells()
+OPENING_ALERT = OpeningDayAlert()
+HOMER_FLASH = HomeRunFlash()
 # First match wins, so ITFDB and Santa outrank the bells. The 9/11 reading of
 # the names outranks everything except the start-up screen.
 from engine.specialdays import READING as NAMES_911
-TAKEOVERS = [StartupSplash(), NAMES_911, ItfdbFlash(), SANTA_ALERT, VINNY_ALERT, SHIPS_BELLS]
+TAKEOVERS = [StartupSplash(), NAMES_911, ItfdbFlash(), HOMER_FLASH, OPENING_ALERT,
+             SANTA_ALERT, VINNY_ALERT, SHIPS_BELLS]

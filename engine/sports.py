@@ -73,7 +73,7 @@ def _game(event_id, date, comp):
             "alt": team.get("alternateColor"),
         })
     teams.sort(key=lambda t: t["home"])        # away first, home second
-    return {
+    game = {
         "id": str(event_id),
         "date": _when(date),
         "state": status.get("state", "pre"),     # pre / in / post
@@ -81,6 +81,35 @@ def _game(event_id, date, comp):
         "time_valid": comp.get("timeValid", True),
         "teams": teams,
     }
+    sit = _situation(comp.get("situation"))
+    if sit:
+        game["situation"] = sit
+    return game
+
+
+def _last_name(athlete):
+    """{'shortName': 'S. Ohtani'} -> 'OHTANI'"""
+    a = (athlete or {}).get("athlete", athlete) or {}
+    name = a.get("shortName") or a.get("displayName") or ""
+    return name.split(".")[-1].strip().split(" ")[-1].upper() if name else ""
+
+
+def _situation(sit):
+    """Baseball: count, outs, runners, batter, last play (only while a game is live)."""
+    if not isinstance(sit, dict) or "outs" not in sit and "balls" not in sit:
+        return None
+    try:
+        return {
+            "balls": int(sit.get("balls") or 0),
+            "strikes": int(sit.get("strikes") or 0),
+            "outs": int(sit.get("outs") or 0),
+            "on": [b for b, k in ((1, "onFirst"), (2, "onSecond"), (3, "onThird")) if sit.get(k)],
+            "batter": _last_name(sit.get("batter")),
+            "pitcher": _last_name(sit.get("pitcher")),
+            "last": ((sit.get("lastPlay") or {}).get("text") or "").strip(),
+        }
+    except (TypeError, ValueError):
+        return None
 
 
 def _fetch_schedule(cfg):
@@ -105,7 +134,20 @@ def _fetch_schedule(cfg):
 def _fetch_live(cfg, event_id):
     data = _get(f"{cfg['league']}/summary?event={event_id}")
     comp = data["header"]["competitions"][0]
-    return _game(event_id, comp.get("date") or data["header"].get("date"), comp)
+    game = _game(event_id, comp.get("date") or data["header"].get("date"), comp)
+    if cfg["league"].startswith("baseball") and game["state"] == "in":
+        sit = _situation(data.get("situation"))
+        if not sit:      # the scoreboard always carries the live situation
+            try:
+                board = _get(f"{cfg['league']}/scoreboard")
+                for e in board.get("events", []):
+                    if str(e.get("id")) == str(event_id):
+                        sit = _situation(e["competitions"][0].get("situation"))
+            except Exception as e:
+                log.debug("scoreboard situation failed (%s)", e)
+        if sit:
+            game["situation"] = sit
+    return game
 
 
 # ------------------------------------------------------------------ deciding what to show
@@ -153,6 +195,58 @@ def view(name, now):
     return pages
 
 
+def game_on(name, day, tz):
+    """Our game on that (local) day, as (game, our_id), or None."""
+    with _lock:
+        t = _teams.get(name)
+        if not t:
+            return None
+        events, our_id = list(t["events"]), t["our_id"]
+    games = sorted((e for e in events if e["date"].astimezone(tz).date() == day),
+                   key=lambda e: e["date"])
+    return (games[0], our_id) if games else None
+
+
+# ------------------------------------------------------------------ home runs
+
+_homer = {"until": 0.0, "team": None, "grand": False}
+
+
+def trigger_homer(name, grand=False):
+    _homer.update(until=time.time() + settings.HOMER_SECONDS, team=name, grand=grand)
+    log.info("HOME RUN %s%s", name, " (GRAND SLAM)" if grand else "")
+
+
+def homer_active():
+    return settings.HOMER_FLASH_ON and time.time() < _homer["until"]
+
+
+def homer_info():
+    return _homer["team"], _homer["grand"]
+
+
+def _check_homer(t, game):
+    """A new last play saying one of OUR batters homered -> the home run flash."""
+    sit = game.get("situation")
+    if not sit or not sit["last"]:
+        return
+    seen = t.setdefault("last_play", {})
+    before = seen.get(game["id"])
+    seen[game["id"]] = sit["last"]
+    if before is None or before == sit["last"]:
+        return                                       # first look, or nothing new
+    text = sit["last"].lower()
+    if "homer" not in text and "home run" not in text and "grand slam" not in text:
+        return
+    us = next((tm for tm in game["teams"] if tm["id"] == t["our_id"]), None)
+    if not us:
+        return
+    top = game["detail"].startswith("TOP")           # top of the inning: away team bats
+    if top != (not us["home"]):
+        return                                       # the other team homered
+    trigger_homer(t["cfg"]["name"], grand="grand slam" in text)
+
+
 # ------------------------------------------------------------------ ITFDB
 
 def trigger_itfdb():
@@ -190,6 +284,8 @@ def _update(t):
     if before == "pre" and game["state"] == "in" and cfg.get("itfdb"):
         trigger_itfdb()
     t["states"][game["id"]] = game["state"]
+    if cfg["league"].startswith("baseball") and game["state"] == "in":
+        _check_homer(t, game)
     with _lock:
         t["events"] = [game if e["id"] == game["id"] else e for e in t["events"]]
         if game["state"] == "post":
@@ -254,8 +350,11 @@ def _demo():
         return [{"id": our + opp, "date": start, "state": state, "detail": detail,
                  "time_valid": True, "teams": teams}]
 
+    dodgers = g("LAD", "SF", False, "in", "3", "2", "BOT 6TH")
+    dodgers[0]["situation"] = {"balls": 2, "strikes": 1, "outs": 1, "on": [1, 3],
+                               "batter": "ADAMES", "pitcher": "YAMAMOTO", "last": ""}
     fake = {
-        "DODGERS": g("LAD", "SF", False, "in", "3", "2", "TOP 7TH"),
+        "DODGERS": dodgers,
         "SEAHAWKS": g("SEA", "LAR", True, "pre", start=now + timedelta(days=3, hours=2)),
         "TROJANS": g("USC", "UCLA", True, "post", "34", "17", "FINAL", now - timedelta(hours=5)),
         "KRAKEN": g("SEA", "VAN", False, "in", "1", "1", "2ND 8:14"),

@@ -12,7 +12,7 @@ PANEL = {
 }
 
 # ---------------------------------------------------------------- start-up
-VERSION = "V3.7"          # shown on the start-up screen
+VERSION = "V3.9"          # shown on the start-up screen
 STARTUP_SPLASH = True   # BILLY5000 boot + logo screen when the clock launches
 
 # ---------------------------------------------------------------- ship's bells
@@ -124,11 +124,44 @@ from datetime import date
 SPECIAL_DAYS_ON = True
 # Seconds each special page stays up
 SPECIAL_PAGE_SECONDS = {"special": 10, "striped": 10, "birthday": 12, "anniversary": 12,
-                        "aprilfools": 8, "trash": 10, "countdown": 10}
+                        "aprilfools": 8, "trash": 10, "countdown": 10,
+                        "credit": 7}
 
 # Holidays with solid-field theming. On these days every clock page (Home and each
 # city) takes the field color + effect, and a greeting page leads the rotation.
-# effect: snow | fireworks | hearts | leaves | sparkle | none
+# effect: snow | fireworks | hearts | leaves | sparkle | ballpark | none
+#
+# ---- Opening Day Mode (Uncle Buck's idea) - see engine/baseball.py ----
+# OPENING_DAYS: add each new season's date once MLB announces it. Everything keys off it:
+#   * the countdown page (starts a week after the World Series, see WORLD_SERIES_END)
+#   * the jersey-number countdown from 99 days out (data/jersey_countdown.txt)
+#   * the Opening Day takeover, and the "opening_week" entry below that themes every
+#     clock Monday-Sunday of Opening Day week
+OPENING_DAY_MODE = True
+OPENING_DAYS = {2027: "03-25"}
+# Day the World Series ended (the countdown starts 7 days later). Unknown year = Nov 5.
+WORLD_SERIES_END = {2026: "10-28"}
+# Extra milestone cards on the countdown page. ("MM-DD" or "YYYY-MM-DD", kind, team)
+#   kinds: truck (Truck Day; team LAD or SEA paints the truck), pitchers (pitchers &
+#   catchers report), firstgame (first spring training game). 100 DAYS, ONE WEEK and the
+#   night before happen on their own.
+BASEBALL_MILESTONES = [
+    ("2027-02-19", "firstgame", "SEA"),     # Mariners' first spring game (Peoria)
+    # ("2027-02-xx", "truck", "LAD"),       # add when announced
+    # ("2027-02-xx", "pitchers", ""),
+]
+# Opening Day takeover: these times (Seattle time), plus this many minutes before each
+# of our games that day.
+OPENING_DAY_ALERTS = ["07:30", "09:00", "10:30", "12:00"]
+OPENING_DAY_ALERT_BEFORE_MIN = 30
+# All season: live baseball shows bases, count, outs and who's up.
+BASEBALL_LIVE_PAGE = True
+# All season: when one of our baseball teams homers, a quick HOME RUN!! flash.
+HOMER_FLASH_ON = True
+HOMER_SECONDS = 8
+# Opening Day week also shows a credit card after PLAY BALL!: "OPENING DAY MODE BY ...".
+# Set to "" to leave it off.
+OPENING_DAY_CREDIT = "UNCLE BUCK"
 SPECIAL_DAYS = [
     {"name": "NEW YEAR",       "date": "01-01", "field": "#0A0A0A", "text": "#FFCC00", "accent": "#FFCC00", "effect": "fireworks", "greeting": "HAPPY NEW YEAR!"},
     {"name": "GROUNDHOG DAY",  "date": "02-02", "field": "#6B4226", "text": "#D2B48C", "accent": "#D2B48C", "effect": "none",      "greeting": "HAPPY GROUNDHOG DAY"},
@@ -138,6 +171,7 @@ SPECIAL_DAYS = [
     {"name": "LABOR DAY",      "rule": {"nth_weekday": [9, 0, 1]},  "field": "#1A5276", "text": "#FFFFFF", "accent": "#7CC242", "effect": "sparkle", "greeting": "HAPPY LABOR DAY"},
     {"name": "HALLOWEEN",      "date": "10-31", "field": "#FF8C00", "text": "#1A0033", "accent": "#9B4DFF", "effect": "leaves",    "greeting": "HAPPY HALLOWEEN"},
     {"name": "THANKSGIVING",   "rule": {"nth_weekday": [11, 3, 4]}, "field": "#8B4513", "text": "#D4AF37", "accent": "#D2691E", "effect": "leaves", "greeting": "HAPPY THANKSGIVING"},
+    {"name": "OPENING DAY",    "opening_week": True,                "field": "#0E4A1C", "text": "#FFFFFF", "accent": "#F2C46B", "effect": "ballpark", "greeting": "PLAY BALL!"},
     {"name": "CHRISTMAS",      "start": "12-09", "end": "12-25",    "field": "#0A5C2E", "text": "#FFFFFF", "accent": "#D0202C", "effect": "snow",    "greeting": "MERRY CHRISTMAS"},
     {"name": "BOXING DAY",     "date": "12-26", "field": "#D0202C", "text": "#0A5C2E", "accent": "#0A5C2E", "effect": "none",      "greeting": "HAPPY BOXING DAY"},
 ]
@@ -294,8 +328,17 @@ OLYMPICS_TRIBUTE = {
 # time zone of the opening, Wikipedia medal table page). Add the next ones as
 # they get close.
 OLYMPICS = [
+    # (short name, ticker name, opening "YYYY-MM-DD HH:MM" local, closing date, time zone, medal page)
+    # Opening times after LA28 are set to the evening; fix them when the ceremonies are scheduled.
+    # After the last Games on this list the countdown just stops showing - add the next ones here.
     ("LA28", "THE LOS ANGELES OLYMPICS", "2028-07-14 17:00", "2028-07-30", "America/Los_Angeles",
      "2028 Summer Olympics medal table"),
+    ("FRA30", "THE FRENCH ALPS WINTER OLYMPICS", "2030-02-01 20:00", "2030-02-17", "Europe/Paris",
+     "2030 Winter Olympics medal table"),
+    ("BNE32", "THE BRISBANE OLYMPICS", "2032-07-23 20:00", "2032-08-08", "Australia/Brisbane",
+     "2032 Summer Olympics medal table"),
+    ("SLC34", "THE SALT LAKE CITY WINTER OLYMPICS", "2034-02-10 19:00", "2034-02-26", "America/Denver",
+     "2034 Winter Olympics medal table"),
 ]
 # During the Games the Olympic page shows every lap, with the medal table
 # (top 4, plus Team USA if it isn't in the top 4). It stays a few days after.

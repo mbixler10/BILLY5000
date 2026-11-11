@@ -9,6 +9,7 @@ Sports pages, in the same layout as the old clock (test32.py):
 Upcoming game: the chips, then the start time as a big clock (Seattle time),
 then TODAY or the date underneath.
 """
+import re
 from zoneinfo import ZoneInfo
 
 import settings
@@ -117,6 +118,10 @@ class SportsPage(Page):
         ours = (us["abbr"][:4], hexc(self.cfg["primary"]), hexc(self.cfg["secondary"]), us)
         theirs = (them["abbr"][:4], opp_prim, opp_sec, them)
         left, right = (theirs, ours) if us["home"] else (ours, theirs)
+        if (kind == "live" and game.get("situation") and settings.BASEBALL_LIVE_PAGE
+                and self.cfg["league"].startswith("baseball")):
+            baseball_live(canvas, left, right, game, now, t)
+            return
         team_chip(canvas, left[0], left[1], left[2], 0, 26)
         team_chip(canvas, right[0], right[1], right[2], 37, 63)
         vs = "VS" if us["home"] else "@"
@@ -142,6 +147,90 @@ class SportsPage(Page):
             else:
                 label = [(start.strftime("%a %b ").upper() + str(start.day), DIM)]
             bottom(canvas, label, t)
+
+
+# ---------------------------------------------------------------- live baseball
+YELLOW = (255, 200, 0)
+BASE_OFF = (70, 70, 70)
+_HALF = re.compile(r"(TOP|BOT|BOTTOM|MID|MIDDLE|END)\D*(\d+)")
+
+
+def inning(detail):
+    """'BOT 6TH' -> ('BOT', '6');  'MIDDLE 6TH' -> ('MID', '6')"""
+    m = _HALF.search(detail or "")
+    if not m:
+        return None, (detail or "")[:5]
+    return m.group(1)[:3], m.group(2)
+
+
+def small_chip(canvas, abbr, prim, sec, y):
+    """Scoreboard row chip on the left: x 0-19."""
+    col = display_color(prim)
+    bg = mix((0, 0, 0), col, 0.6) if lum(col) > 45 else col
+    fill(canvas, 0, y, 20, 9, bg)
+    fill(canvas, 0, y, 2, 9, display_color(sec))
+    ink = (20, 20, 20) if lum(bg) > 150 else WHITE
+    font = F5 if width(F5, abbr) <= 18 else F3
+    draw(canvas, font, abbr, 2 + (18 - width(font, abbr)) // 2, y + (1 if font is F5 else 2), ink)
+
+
+def base(canvas, cx, cy, on):
+    """A base: a little diamond, lit when a runner is on it."""
+    col = YELLOW if on else BASE_OFF
+    for dy in range(-2, 3):
+        span = 2 - abs(dy)
+        for dx in range(-span, span + 1):
+            if on or abs(dx) == span:          # empty bases are just outlines
+                canvas.SetPixel(cx + dx, cy + dy, *col)
+
+
+def baseball_live(canvas, away, home, game, now, t):
+    """
+        [ATL]  2     <> 2nd
+        [LAD]  3   <>  <> 3rd / 1st
+        BOT 6  2-1   o o o    (outs)
+        AB OHTANI  P FRIED
+    """
+    sit = game["situation"]
+    for (abbr, prim, sec, tm), y in ((away, 0), (home, 9)):
+        small_chip(canvas, abbr, prim, sec, y)
+        draw(canvas, F5, str(tm["score"] or "0"), 23, y + 1, WHITE)
+    half, num = inning(game["detail"])
+    between = half in ("MID", "END")
+    base(canvas, 47, 3, 2 in sit["on"] and not between)
+    base(canvas, 53, 9, 1 in sit["on"] and not between)
+    base(canvas, 41, 9, 3 in sit["on"] and not between)
+    # inning with an up/down arrow, the count, the outs
+    x = 1
+    if half in ("TOP", "BOT"):
+        arrow = ["00100", "01110", "11111"] if half == "TOP" else ["11111", "01110", "00100"]
+        for r, row in enumerate(arrow):
+            for q, bit in enumerate(row):
+                if bit == "1":
+                    canvas.SetPixel(x + q, 20 + r, *YELLOW)
+        x += 7
+        draw(canvas, F5, num, x, 18, YELLOW)
+    else:
+        draw(canvas, F5, f"{half or ''} {num}".strip(), x, 18, YELLOW)
+    if not between:
+        draw(canvas, F5, f"{sit['balls']}-{sit['strikes']}", 24, 18, WHITE)
+    for i in range(3):
+        col = RED if i < sit["outs"] and not between else BASE_OFF
+        cx = 52 + i * 5
+        fill(canvas, cx, 20, 3, 3, col)
+    # who's up (scrolls if long), with the blinking red LIVE dot
+    if now.timestamp() % 1.2 < 0.6:
+        fill(canvas, 1, 27, 2, 2, RED)
+    segs = []
+    if between:
+        segs = [("LIVE ", RED), (game["detail"], WHITE)]
+    else:
+        if sit["batter"]:
+            segs += [("AB ", DIM), (sit["batter"], WHITE)]
+        if sit["pitcher"]:
+            segs += [("  P ", DIM), (sit["pitcher"], WHITE)]
+        segs = segs or [("LIVE ", RED), (game["detail"], WHITE)]
+    bottom(canvas, segs, t, x0=5)
 
 
 class ItfdbFlash(Page):

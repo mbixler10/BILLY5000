@@ -14,6 +14,11 @@ Lighthouse:  python main.py --lighthouse "NORTH HEAD"     (or --lighthouse all)
 Santa test:  python main.py --demo-santa               (run a TOY alert now; add --at for other dates)
 Vinny test:  python main.py --demo-vinny intercept     (one of Vinny's ELFNET transmissions now)
              python -m engine.vinny 2026-12-10         (Vinny's schedule for a day)
+Opening Day: python main.py --demo-opening             (the Opening Day takeover now)
+             python main.py --demo-homer MARINERS      (HOME RUN!! flash; add --grand)
+             python main.py --demo-sports              (includes a live Dodgers game with bases/count)
+             python main.py --at "2027-01-31 10:00"    (countdown / jersey for that day)
+             python -m engine.baseball all             (every countdown day and its jersey)
 """
 import argparse
 import logging
@@ -25,7 +30,8 @@ import settings
 from engine.display import Display
 from engine import weather, alerts, sports, seattle_weather, medals
 import pages
-from pages import build_rotation, TAKEOVERS, SANTA_ALERT, VINNY_ALERT, SHIPS_BELLS
+from pages import (build_rotation, TAKEOVERS, SANTA_ALERT, VINNY_ALERT, SHIPS_BELLS,
+                   OPENING_ALERT, HOMER_FLASH)
 
 FPS = 20
 
@@ -80,6 +86,11 @@ def main():
     ap.add_argument("--demo-vinny", metavar="KIND", nargs="?", const="any",
                     help="play one of Agent Vinny's ELFNET transmissions now: sitrep, intel, "
                          "santa, orders, post, intercept, arrival, eve_report, xmas (default: random)")
+    ap.add_argument("--demo-opening", action="store_true",
+                    help="play the Opening Day takeover now, with sample games")
+    ap.add_argument("--demo-homer", metavar="TEAM", nargs="?", const="DODGERS",
+                    help="play the HOME RUN!! flash now (DODGERS or MARINERS)")
+    ap.add_argument("--grand", action="store_true", help="with --demo-homer: make it a grand slam")
     ap.add_argument("--demo-weather", action="store_true",
                     help="use a sample Seattle forecast to preview the weather pages")
     ap.add_argument("--demo-bells", action="store_true",
@@ -117,6 +128,13 @@ def main():
         VINNY_ALERT.force = args.demo_vinny
     if args.demo_bells:
         SHIPS_BELLS.force = True
+    if args.demo_opening:
+        from pages.opening import demo_games
+        OPENING_ALERT.demo_games = demo_games(now())
+        OPENING_ALERT.force_at = True
+    if args.demo_homer:
+        HOMER_FLASH.force = args.demo_homer.upper()
+        HOMER_FLASH.grand = args.grand
 
     running = True
 

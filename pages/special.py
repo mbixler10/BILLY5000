@@ -60,6 +60,8 @@ class SpecialSlot(Page):
             sd.render_april_fools(f, t)
         elif self.kind == "honorroll":
             sd.render_honor_roll(f, self.arg, t)
+        elif self.kind == "credit":
+            sd.render_credit(f, self.arg, t)
         elif self.kind == "trash":
             sd.render_trash(f, self.arg, t)
         f.flush(canvas)

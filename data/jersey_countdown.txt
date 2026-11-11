@@ -1,0 +1,244 @@
+# BILLY5000 jersey-number countdown
+# From 99 days out, each day shows a jersey with that number and a player who wore it.
+#
+# Format:  NUMBER  TEAM  FIRST LINE | SECOND LINE
+#   TEAM is LAD or SEA. Each name part is 8 letters max; the two parts show as one name
+#   along the bottom of the screen, under the big jersey.
+#   More than one line on a number: the first one leads, and the others take turns with it through the day.
+#   Put # in front of a line to switch it off. Lines marked  # CHECK  are my best recollection - please confirm.
+#   Numbers with nobody listed show the plain countdown.
+#
+# Opening Day 2027: Thursday, March 25. Edit this file anytime; the board reloads it.
+
+# --- 99 days: Wed Dec 16 ---
+99  LAD  HYUN-JIN | RYU           # CHECK
+# --- 98 days: Thu Dec 17 ---
+#   (open: plain countdown)
+# --- 97 days: Fri Dec 18 ---
+#   (open: plain countdown)
+# --- 96 days: Sat Dec 19 ---
+#   (open: plain countdown)
+# --- 95 days: Sun Dec 20 ---
+#   (open: plain countdown)
+# --- 94 days: Mon Dec 21 ---
+#   (open: plain countdown)
+# --- 93 days: Tue Dec 22 ---
+#   (open: plain countdown)
+# --- 92 days: Wed Dec 23 ---
+#   (open: plain countdown)
+# --- 91 days: Thu Dec 24 ---
+#   (open: plain countdown)
+# --- 90 days: Fri Dec 25 ---
+#   (open: plain countdown)
+# --- 89 days: Sat Dec 26 ---
+#   (open: plain countdown)
+# --- 88 days: Sun Dec 27 ---
+#   (open: plain countdown)
+# --- 87 days: Mon Dec 28 ---
+#   (open: plain countdown)
+# --- 86 days: Tue Dec 29 ---
+#   (open: plain countdown)
+# --- 85 days: Wed Dec 30 ---
+#   (open: plain countdown)
+# --- 84 days: Thu Dec 31 ---
+#   (open: plain countdown)
+# --- 83 days: Fri Jan 1 ---
+#   (open: plain countdown)
+# --- 82 days: Sat Jan 2 ---
+#   (open: plain countdown)
+# --- 81 days: Sun Jan 3 ---
+#   (open: plain countdown)
+# --- 80 days: Mon Jan 4 ---
+#   (open: plain countdown)
+# --- 79 days: Tue Jan 5 ---
+#   (open: plain countdown)
+# --- 78 days: Wed Jan 6 ---
+#   (open: plain countdown)
+# --- 77 days: Thu Jan 7 ---
+#   (open: plain countdown)
+# --- 76 days: Fri Jan 8 ---
+#   (open: plain countdown)
+# --- 75 days: Sat Jan 9 ---
+75  SEA  ANDRES | MUNOZ
+# --- 74 days: Sun Jan 10 ---
+74  LAD  KENLEY | JANSEN          # CHECK
+# --- 73 days: Mon Jan 11 ---
+#   (open: plain countdown)
+# --- 72 days: Tue Jan 12 ---
+#   (open: plain countdown)
+# --- 71 days: Wed Jan 13 ---
+#   (open: plain countdown)
+# --- 70 days: Thu Jan 14 ---
+#   (open: plain countdown)
+# --- 69 days: Fri Jan 15 ---
+#   (open: plain countdown)
+# --- 68 days: Sat Jan 16 ---
+68  SEA  GEORGE | KIRBY
+# --- 67 days: Sun Jan 17 ---
+#   (open: plain countdown)
+# --- 66 days: Mon Jan 18 ---
+66  LAD  YASIEL | PUIG            # CHECK
+# --- 65 days: Tue Jan 19 ---
+#   (open: plain countdown)
+# --- 64 days: Wed Jan 20 ---
+#   (open: plain countdown)
+# --- 63 days: Thu Jan 21 ---
+#   (open: plain countdown)
+# --- 62 days: Fri Jan 22 ---
+#   (open: plain countdown)
+# --- 61 days: Sat Jan 23 ---
+#   (open: plain countdown)
+# --- 60 days: Sun Jan 24 ---
+#   (open: plain countdown)
+# --- 59 days: Mon Jan 25 ---
+59  LAD  EVAN | PHILLIPS
+# --- 58 days: Tue Jan 26 ---
+58  SEA  LUIS | CASTILLO          # CHECK
+# --- 57 days: Wed Jan 27 ---
+#   (open: plain countdown)
+# --- 56 days: Thu Jan 28 ---
+#   (open: plain countdown)
+# --- 55 days: Fri Jan 29 ---
+55  LAD  OREL | BULLDOG           # CHECK
+# --- 54 days: Sat Jan 30 ---
+#   (open: plain countdown)
+# --- 53 days: Sun Jan 31 ---
+53  LAD  DON | DRYSDALE
+# --- 52 days: Mon Feb 1 ---
+#   (open: plain countdown)
+# --- 51 days: Tue Feb 2 ---
+51  SEA  ICHIRO
+51  SEA  RANDY | JOHNSON          # CHECK
+51  LAD  ALEX | VESIA
+# --- 50 days: Wed Feb 3 ---
+50  LAD  MOOKIE | BETTS
+50  SEA  JAMIE | MOYER            # CHECK
+# --- 49 days: Thu Feb 4 ---
+#   (open: plain countdown)
+# --- 48 days: Fri Feb 5 ---
+#   (open: plain countdown)
+# --- 47 days: Sat Feb 6 ---
+47  SEA  MATT | BRASH
+# --- 46 days: Sun Feb 7 ---
+46  LAD  BURT | HOOTON            # CHECK
+# --- 45 days: Mon Feb 8 ---
+#   (open: plain countdown)
+# --- 44 days: Tue Feb 9 ---
+44  SEA  JULIO
+44  LAD  ANDY | PAGES
+44  SEA  MIKE | CAMERON           # CHECK
+# --- 43 days: Wed Feb 10 ---
+43  LAD  RAUL | MONDESI           # CHECK
+# --- 42 days: Thu Feb 11 ---
+42  LAD  JACKIE | ROBINSON
+42  SEA  JACKIE | ROBINSON
+# --- 41 days: Fri Feb 12 ---
+41  LAD  JERRY | REUSS            # CHECK
+# --- 40 days: Sat Feb 13 ---
+#   (open: plain countdown)
+# --- 39 days: Sun Feb 14 ---
+39  LAD  ROY | CAMPY
+# --- 38 days: Mon Feb 15 ---
+38  LAD  ERIC | GAGNE             # CHECK
+38  SEA  ROBBIE | RAY
+# --- 37 days: Tue Feb 16 ---
+37  LAD  TEOSCAR
+37  SEA  PAUL | SEWALD
+# --- 36 days: Wed Feb 17 ---
+36  SEA  LOGAN | GILBERT
+36  LAD  DON | NEWCOMBE           # CHECK
+# --- 35 days: Thu Feb 18 ---
+#   (open: plain countdown)
+# --- 34 days: Fri Feb 19 ---
+34  LAD  FERNANDO
+34  SEA  KING | FELIX
+# --- 33 days: Sat Feb 20 ---
+#   (open: plain countdown)
+# --- 32 days: Sun Feb 21 ---
+32  LAD  SANDY | KOUFAX
+# --- 31 days: Mon Feb 22 ---
+31  LAD  MIKE | PIAZZA            # CHECK
+# --- 30 days: Tue Feb 23 ---
+30  LAD  MAURY | WILLS            # CHECK
+# --- 29 days: Wed Feb 24 ---
+29  SEA  CAL | RALEIGH
+29  LAD  ADRIAN | BELTRE          # CHECK
+# --- 28 days: Thu Feb 25 ---
+28  LAD  PEDRO | GUERRERO         # CHECK
+28  SEA  EUGENIO | SUAREZ
+# --- 27 days: Fri Feb 26 ---
+27  LAD  MATT | KEMP              # CHECK
+# --- 26 days: Sat Feb 27 ---
+26  LAD  CHASE | UTLEY            # CHECK
+# --- 25 days: Sun Feb 28 ---
+25  LAD  TOMMY | EDMAN
+# --- 24 days: Mon Mar 1 ---
+24  SEA  KEN | GRIFFEY
+24  LAD  WALTER | ALSTON
+# --- 23 days: Tue Mar 2 ---
+23  LAD  KIRK | GIBSON            # CHECK
+23  SEA  TY | FRANCE
+# --- 22 days: Wed Mar 3 ---
+22  LAD  CLAYTON | KERSHAW
+22  SEA  BRYAN | WOO              # CHECK
+# --- 21 days: Thu Mar 4 ---
+21  SEA  ALVIN | DAVIS            # CHECK
+# --- 20 days: Fri Mar 5 ---
+20  LAD  DON | SUTTON
+# --- 19 days: Sat Mar 6 ---
+19  LAD  JIM | GILLIAM
+19  SEA  JAY | BUHNER
+# --- 18 days: Sun Mar 7 ---
+18  LAD  YOSHI | YAMAMOTO
+18  SEA  HISASHI | IWAKUMA        # CHECK
+# --- 17 days: Mon Mar 8 ---
+17  LAD  SHOHEI | OHTANI
+17  SEA  MITCH | HANIGER
+# --- 16 days: Tue Mar 9 ---
+16  LAD  WILL | SMITH
+16  LAD  HIDEO | NOMO             # CHECK
+# --- 15 days: Wed Mar 10 ---
+15  LAD  SHAWN | GREEN
+15  SEA  KYLE | SEAGER
+15  LAD  DAVEY | LOPES            # CHECK
+# --- 14 days: Thu Mar 11 ---
+14  LAD  GIL | HODGES
+14  SEA  LOU | PINIELLA           # CHECK
+# --- 13 days: Fri Mar 12 ---
+13  LAD  MAX | MUNCY
+13  SEA  OMAR | VIZQUEL
+# --- 12 days: Sat Mar 13 ---
+12  LAD  JEFF | KENT
+12  LAD  TOMMY | DAVIS
+12  LAD  DUSTY | BAKER            # CHECK
+12  SEA  MARK | LANGSTON
+# --- 11 days: Sun Mar 14 ---
+11  SEA  EDGAR | MARTINEZ
+11  LAD  MANNY | MOTA
+# --- 10 days: Mon Mar 15 ---
+10  LAD  RON | CEY
+10  LAD  JUSTIN | TURNER
+# --- 9 days: Tue Mar 16 ---
+9   LAD  WALLY | MOON
+# --- 8 days: Wed Mar 17 ---
+8   LAD  KIKE
+8   LAD  REGGIE | SMITH           # CHECK
+# --- 7 days: Thu Mar 18 ---
+7   LAD  STEVE | YEAGER           # CHECK
+7   SEA  MARCO | GONZALES
+# --- 6 days: Fri Mar 19 ---
+6   LAD  STEVE | GARVEY
+6   SEA  DAN | WILSON
+# --- 5 days: Sat Mar 20 ---
+5   LAD  FREDDIE | FREEMAN
+5   SEA  JOHN | OLERUD
+# --- 4 days: Sun Mar 21 ---
+4   LAD  DUKE | SNIDER
+4   SEA  HAROLD | REYNOLDS
+# --- 3 days: Mon Mar 22 ---
+3   SEA  J.P. | CRAWFORD
+3   LAD  STEVE | SAX              # CHECK
+# --- 2 days: Tue Mar 23 ---
+2   LAD  TOMMY | LASORDA
+# --- 1 days: Wed Mar 24 ---
+1   LAD  PEE WEE | REESE

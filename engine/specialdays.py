@@ -175,9 +175,29 @@ def rule_date_this_year(entry, year):
     return None
 
 
+def opening_day(year):
+    """MLB Opening Day for that year (settings.OPENING_DAYS), or None."""
+    from engine import baseball
+    if not getattr(settings, "OPENING_DAY_MODE", True):
+        return None
+    return baseball.opening_day(year)
+
+
+def in_opening_week(d):
+    """True Monday-Sunday of the week Opening Day falls in."""
+    od = opening_day(d.year)
+    if not od:
+        return False
+    monday = od - timedelta(days=od.weekday())
+    return monday <= d <= monday + timedelta(days=6)
+
+
 def field_day_for(d):
     for sd in SPECIAL_DAYS:
-        if "start" in sd:
+        if sd.get("opening_week"):
+            if in_opening_week(d):
+                return sd
+        elif "start" in sd:
             sm, sdd = map(int, sd["start"].split("-"))
             em, ed = map(int, sd["end"].split("-"))
             s = date(d.year - (1 if (sm, sdd) > (d.month, d.day) else 0), sm, sdd)
@@ -232,6 +252,9 @@ def special_pages_for(d):
     sd = field_day_for(d)
     if sd:
         pages.append(("special", sd))
+        credit = getattr(settings, "OPENING_DAY_CREDIT", "")
+        if sd.get("opening_week") and credit:
+            pages.append(("credit", credit))
     st = striped_day_for(d)
     if st:
         pages.append(("striped", st))
@@ -352,6 +375,25 @@ def draw_effect(f, effect, t, accent):
             x = int(rnd(i) * W + math.sin(t * 1.3 + i) * 3) % W
             y = int(rnd(i + 11) * H + t * (2 + rnd(i + 2) * 3)) % H
             f.blend(x, y, cols[i % 3], 0.55)
+    elif effect == "ballpark":
+        # mowed-grass stripes, then a couple of fly balls arcing across
+        for x in range(0, W, 8):
+            for xx in range(x, min(x + 4, W)):
+                for y in range(H):
+                    f.blend(xx, y, (40, 130, 55), 0.18)
+        for b in range(2):
+            period = 3.4
+            tb = t + b * 1.7
+            k = int(tb / period)
+            p = (tb % period) / period
+            x0 = 4 + rnd(k * 5 + b) * 20
+            x = int(x0 + p * (34 + rnd(k * 3 + b) * 16))
+            y = int(H - 3 - math.sin(p * math.pi) * (18 + rnd(k + b * 9) * 8))
+            fade = min(1.0, (1 - abs(2 * p - 1)) * 3)
+            f.blend(x, y, (255, 255, 255), 0.85 * fade)
+            f.blend(x + 1, y, (255, 255, 255), 0.85 * fade)
+            f.blend(x, y + 1, (255, 255, 255), 0.85 * fade)
+            f.blend(x + 1, y + 1, (220, 40, 40), 0.7 * fade)   # a stitch
     elif effect == "sparkle":
         for i in range(14):
             ph = (t * (0.6 + rnd(i) * 0.8) + rnd(i + 40)) % 1
@@ -459,6 +501,29 @@ def render_striped(f, sd, t):
         fnt = F5 if Frame.width(F5, word) <= 62 else F3
         th = 7 if fnt is F5 else 5
         f.text(fnt, word, 32 - Frame.width(fnt, word) // 2, band_top + (band_h - th) // 2, rgb(col))
+
+
+def render_credit(f, who, t):
+    """Opening Day week: ballpark bunting, OPENING DAY / MODE BY / <who>."""
+    blue, white, red = (20, 50, 150), (235, 235, 235), (200, 20, 30)
+    for cx in (10, 32, 54):                  # three pleated half-fans across the top
+        for y in range(7):
+            for x in range(cx - 10, cx + 11):
+                if (x - cx) ** 2 / 100 + y * y / 49 <= 1:
+                    c = blue if y < 3 else (white if y < 5 else red)
+                    if (x - cx) % 4 == 0:
+                        c = tuple(v * 6 // 10 for v in c)
+                    f.set(x, y, c)
+    f.text(F5, "OPENING DAY", 32 - Frame.width(F5, "OPENING DAY") // 2, 9, WHITE)
+    f.text(F3, "MODE BY", 32 - Frame.width(F3, "MODE BY") // 2, 18, dim())
+    fnt = F5 if Frame.width(F5, who) <= 62 else F3
+    gold = (242, 196, 107)
+    shine = int((t * 20) % 90) - 13          # a glint sweeps across the name
+    x0 = 32 - Frame.width(fnt, who) // 2
+    f.text(fnt, who, x0, 24, gold)
+    for (x, y), c in list(f.px.items()):
+        if y >= 24 and c == gold and abs(x - shine) <= 1:
+            f.px[(x, y)] = (255, 250, 220)
 
 
 # ---------------------------------------------------------------- honor roll
