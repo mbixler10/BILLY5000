@@ -163,16 +163,88 @@ def nth_weekday(y, month, wd, n):
     return d - timedelta(days=(d.weekday() - wd) % 7)
 
 
-def rule_date_this_year(entry, year):
+def _md(year, md):
+    m, d = map(int, md.split("-"))
+    return date(year, m, d)
+
+
+def holiday_span(entry, year):
+    """(first day, last day) of this holiday's run that STARTS in `year`, or None.
+    Handles: "date" "MM-DD" | "rule" (nth_weekday / easter / rose_bowl, + "offset")
+    | "dates" {year: "MM-DD" or ["MM-DD", "MM-DD"]} | "astro" (spring/summer/fall/winter)
+    | "first_candle" (Hanukkah) | "start"/"end" seasons."""
+    if entry.get("first_candle"):
+        first = hanukkah_first(year)
+        return (first, first + timedelta(days=8)) if first else None
+    if entry.get("paralympics"):
+        for row in getattr(settings, "PARALYMPICS", []):
+            opening = date.fromisoformat(row[1])
+            if opening.year == year:
+                return opening, date.fromisoformat(row[2])
+        return None
+    if entry.get("olympics"):
+        for row in getattr(settings, "OLYMPICS", []):
+            opening = date.fromisoformat(row[2][:10])
+            if opening.year == year:
+                return opening, date.fromisoformat(row[3])
+        return None
+    if "dates" in entry:
+        table = entry["dates"]
+        if isinstance(table, str):
+            table = getattr(settings, table, {})
+        v = table.get(year)
+        if not v:
+            return None
+        if isinstance(v, (list, tuple)):
+            first = _md(year, v[0])
+            last = _md(year, v[1])
+            if last < first:
+                last = _md(year + 1, v[1])
+            return first, last
+        return _md(year, v), _md(year, v)
+    if "astro" in entry:
+        from engine import sky
+        d = sky.season_start(year, entry["astro"])
+        return d, d
+    if "start" in entry:
+        first = _md(year, entry["start"])
+        last = _md(year, entry["end"])
+        if last < first:
+            last = _md(year + 1, entry["end"])
+        return first, last
     if "rule" in entry:
         r = entry["rule"]
         if "easter" in r:
-            return easter_date(year) + timedelta(days=r["easter"])
-        return nth_weekday(year, *r["nth_weekday"])
+            d = easter_date(year) + timedelta(days=r["easter"])
+        elif r.get("rose_bowl"):
+            d = date(year, 1, 1)
+            if d.weekday() == 6:              # never on a Sunday: moves to Monday Jan 2
+                d += timedelta(days=1)
+        else:
+            d = nth_weekday(year, *r["nth_weekday"])
+        d += timedelta(days=r.get("offset", 0))
+        return d, d
     if "date" in entry:
-        m, d = map(int, entry["date"].split("-"))
-        return date(year, m, d)
+        try:
+            d = _md(year, entry["date"])
+        except ValueError:                    # Feb 29 in a non-leap year
+            return None
+        return d, d
     return None
+
+
+def rule_date_this_year(entry, year):
+    span = holiday_span(entry, year)
+    return span[0] if span else None
+
+
+def covers(entry, d):
+    """True if the holiday is on (or running through) day d."""
+    for year in (d.year, d.year - 1):         # runs can start in December and end in January
+        span = holiday_span(entry, year)
+        if span and span[0] <= d <= span[1]:
+            return True
+    return False
 
 
 def opening_day(year):
@@ -192,28 +264,82 @@ def in_opening_week(d):
     return monday <= d <= monday + timedelta(days=6)
 
 
-def field_day_for(d):
+def hanukkah_first(year):
+    """Date of the first candle's evening that year, or None."""
+    md = getattr(settings, "HANUKKAH_DATES", {}).get(year)
+    if not md:
+        return None
+    m, dd = map(int, md.split("-"))
+    return date(year, m, dd)
+
+
+def hanukkah_candles(now):
+    """Candles lit right now (0-8), counting a new one at CANDLE_LIGHTING; None if
+    it isn't Hanukkah. The first evening -> 1, the last day -> 8."""
+    local = now.astimezone(HOME)
+    for year in (local.year, local.year - 1):
+        first = hanukkah_first(year)
+        if not first:
+            continue
+        days = (local.date() - first).days
+        if 0 <= days <= 8:
+            h, m = map(int, getattr(settings, "CANDLE_LIGHTING", "16:30").split(":"))
+            evening = (local.hour, local.minute) >= (h, m)
+            n = days + (1 if evening else 0)
+            return min(8, n)
+    return None
+
+
+LAP = 0    # counts laps of the rotation (LapStart bumps it); overlapping holidays take turns
+
+
+def new_lap():
+    global LAP
+    LAP += 1
+
+
+def field_days_for(d):
+    """Every color-theme holiday that covers day d, in SPECIAL_DAYS order."""
+    out = []
     for sd in SPECIAL_DAYS:
         if sd.get("opening_week"):
             if in_opening_week(d):
-                return sd
-        elif "start" in sd:
-            sm, sdd = map(int, sd["start"].split("-"))
-            em, ed = map(int, sd["end"].split("-"))
-            s = date(d.year - (1 if (sm, sdd) > (d.month, d.day) else 0), sm, sdd)
-            e = date(s.year + (1 if em < sm else 0), em, ed)
-            if s <= d <= e:
-                return sd
-        elif rule_date_this_year(sd, d.year) == d:
-            return sd
-    return None
+                out.append(sd)
+        elif covers(sd, d):
+            out.append(sd)
+    return out
+
+
+def field_day_for(d):
+    """The holiday theming the board right now. When two holidays share a day
+    (Hanukkah and the Christmas season), they take turns a whole lap each:
+    one lap Hanukkah, the next Christmas, back and forth until one ends."""
+    days = field_days_for(d)
+    if not days:
+        return None
+    return days[LAP % len(days)]
 
 
 def striped_day_for(d):
     for sd in STRIPED_DAYS:
-        if rule_date_this_year(sd, d.year) == d:
+        if covers(sd, d):
             return sd
     return None
+
+
+def half_birthday(month, day, year):
+    """Six months after a birthday, in the given year (or None if that falls in another)."""
+    m = month + 6 if month <= 6 else month - 6
+    try:
+        return date(year, m, min(day, 28 if m == 2 else day))
+    except ValueError:
+        return date(year, m, 30)
+
+
+def render_half_birthday(f, arg, t):
+    name, years = arg
+    msg = f"HAPPY HALF BIRTHDAY {name}" if (t % 8) < 4 else f"{name} IS {years} AND A HALF"
+    render_birthday(f, msg, t)
 
 
 def is_recycling_week(d):
@@ -247,6 +373,18 @@ def special_pages_for(d):
         pages.append(("trash", trash))
     if (d.month, d.day) == APRIL_FOOLS_DATE:
         pages.append(("aprilfools", None))
+    from engine.holiday_art import games_today
+    g = games_today(d)
+    if g and g[0].startswith("LA") and not g[3]:
+        pages.append(("coliseum", None))
+    db = getattr(settings, "DALLAS_BIRTHDAY", None)
+    if db and (d.month, d.day) == db["date"]:
+        pages.append(("dallasbday", None))
+    for name, (bm, bd), born in getattr(settings, "HALF_BIRTHDAYS", []):
+        half = half_birthday(bm, bd, d.year)
+        if half == d:
+            years = d.year - born - (1 if (bm, bd) > (d.month, d.day) else 0)
+            pages.append(("halfbirthday", (name, years)))
     for msg in BIRTHDAYS.get((d.month, d.day), []):
         pages.append(("anniversary" if "ANNIVERSARY" in msg else "birthday", msg))
     sd = field_day_for(d)
@@ -258,6 +396,10 @@ def special_pages_for(d):
     st = striped_day_for(d)
     if st:
         pages.append(("striped", st))
+    if getattr(settings, "FULL_MOON_PAGE", True):
+        from engine import sky
+        if d in sky.full_moons(d.year):
+            pages.append(("fullmoon", sky.full_moon_name(d)))
     if settings.HONOR_ROLL and "%02d-%02d" % (d.month, d.day) == settings.HONOR_ROLL_DATE:
         pages.append(("honorroll", settings.HONOR_ROLL))
     return pages
@@ -276,6 +418,8 @@ def _who(msg):
 
 
 def _holiday_name(sd):
+    if "countdown_name" in sd:
+        return sd["countdown_name"]
     if "greeting" in sd:  # field days: their greeting without HAPPY/MERRY
         g = sd["greeting"].replace("!", "")
         for lead in ("HAPPY ", "MERRY "):
@@ -300,6 +444,8 @@ def next_special(d):
     """Soonest special day after d -> {date, kind, name, color}, or None."""
     found = []
     for sd in SPECIAL_DAYS + STRIPED_DAYS:
+        if sd.get("countdown") is False or sd.get("opening_week"):
+            continue
         if "start" in sd:     # a season (Christmas): count down to its last day
             m, dd = map(int, sd["end"].split("-"))
             nd = _next_on_or_after(m, dd, d)
@@ -322,6 +468,10 @@ def next_special(d):
                 found.append((nd, "BIRTHDAY", _who(msg), (64, 184, 255)))
     nd = _next_on_or_after(*APRIL_FOOLS_DATE, d)
     found.append((nd, "HOLIDAY", "APRIL FOOLS", (48, 208, 96)))
+    for name, (bm, bd), born in getattr(settings, "HALF_BIRTHDAYS", []):
+        hb = half_birthday(bm, bd, d.year)
+        nd = hb if hb and hb > d else half_birthday(bm, bd, d.year + 1)
+        found.append((nd, "BIRTHDAY", f"{name}'S HALF BIRTHDAY", (64, 184, 255)))
     found = [x for x in found if x[0] and f"{x[0]:%m-%d}" not in COUNTDOWN_SKIP]
     if not found:
         return None
@@ -342,6 +492,43 @@ def rnd(i):
 
 
 def draw_effect(f, effect, t, accent):
+    if effect == "candles":
+        # tiny candle flames drifting up like sparks, plus a soft silver sparkle
+        for i in range(10):
+            sp = 1.5 + rnd(i) * 2.5
+            x = int(rnd(i + 41) * W + math.sin(t * 1.3 + i) * 1.5) % W
+            y = H - 1 - int(rnd(i + 17) * H + t * sp) % H
+            f.blend(x, y, (255, 190, 60), 0.30 + rnd(i + 5) * 0.3)
+        for i in range(8):
+            if math.sin(t * 2.2 + i * 1.9) > 0.75:
+                f.blend(int(rnd(i + 70) * W), int(rnd(i + 71) * H), accent, 0.6)
+        return
+    if effect == "confetti":
+        cols = [(255, 215, 0), (0, 200, 120), (200, 80, 255), (255, 90, 160), (80, 200, 255)]
+        for i in range(22):
+            x = int(rnd(i) * W + math.sin(t * 2 + i) * 2) % W
+            y = int(rnd(i + 5) * H + t * (3 + rnd(i + 9) * 4)) % H
+            f.blend(x, y, cols[i % len(cols)], 0.7)
+        return
+    if effect == "petals":                      # rose petals in the accent color
+        for i in range(12):
+            x = int(rnd(i + 3) * W + math.sin(t * 1.2 + i) * 3) % W
+            y = int(rnd(i + 13) * H + t * (2 + rnd(i + 4) * 2)) % H
+            f.blend(x, y, accent, 0.6)
+        return
+    if effect == "apples":                      # little red apples drifting down
+        for i in range(7):
+            x = int(rnd(i + 21) * (W - 2) + math.sin(t + i) * 2) % (W - 2)
+            y = int(rnd(i + 31) * H + t * (2 + rnd(i + 6) * 2)) % H
+            f.blend(x, y, accent, 0.55)
+            f.blend(x + 1, y, accent, 0.55)
+            f.blend(x + 1, y - 1, (60, 180, 60), 0.5)
+        return
+    if effect == "gridiron":                    # yard lines across the field
+        for x in range(4, W, 6):
+            for y in range(H):
+                f.blend(x, y, (255, 255, 255), 0.22)
+        return
     if effect == "snow":
         for i in range(20):
             sp = 2 + rnd(i) * 4
@@ -478,15 +665,71 @@ def draw_lines(f, lines, color, top=0, bottom=H):
 
 
 # ---------------------------------------------------------------- special pages
+def render_menorah(f, sd, t):
+    """Hanukkah: a menorah with tonight's candles lit (newest on the left, lit last),
+    the shamash in the middle, and HAPPY HANUKKAH / which night across the top."""
+    now = _now or datetime.now(HOME)
+    n = hanukkah_candles(now)
+    n = 0 if n is None else n
+    f.bg = rgb(sd["field"])
+    gold, silver = (230, 180, 60), (150, 175, 220)
+    # top line: greeting, then which night
+    if n and (t % 6) >= 3:
+        words = ["", "1ST", "2ND", "3RD", "4TH", "5TH", "6TH", "7TH", "8TH"]
+        top = f"{words[n]} NIGHT" if n < 8 else "8TH NIGHT!"
+    elif n == 0:
+        top = "LIGHTS TONIGHT" if (t % 6) >= 3 else sd["greeting"]
+    else:
+        top = sd["greeting"]
+    f.text(F3, top, 32 - Frame.width(F3, top) // 2, 0, rgb(sd["text"]))
+    # nine candles: x positions, shamash (index 4) taller in the middle
+    xs = [4, 11, 18, 25, 31, 38, 45, 52, 59]
+    order = [8, 7, 6, 5, 3, 2, 1, 0]   # candles go in from the right, skipping the shamash
+    lit = set(order[:n])
+    for i, x in enumerate(xs):
+        sham = i == 4
+        top_y = 9 if sham else 12
+        if sham or i in lit:
+            f.fill(x, top_y, x + 1, 17, (245, 245, 255) if sham else (150, 190, 255))  # candle
+            fl = math.sin(t * 9 + i * 1.7)                            # flicker
+            f.set(x, top_y - 1, (255, 200, 40))
+            f.set(x + 1, top_y - 1, (255, 200, 40))
+            f.set(x + (0 if fl > 0 else 1), top_y - 2, (255, 140, 0))
+            f.set(x + (1 if fl > 0.6 else 0), top_y - 3,
+                  (255, 90, 0) if fl > -0.3 else (255, 160, 40))
+            for gx in range(x - 2, x + 4):                             # glow
+                for gy in range(top_y - 5, top_y):
+                    f.blend(gx, gy, (255, 200, 80), 0.08)
+        f.fill(x - 1, 18, x + 2, 18, gold)                            # cup
+    f.fill(3, 19, 61, 19, gold)                                       # the arm
+    f.fill(31, 19, 32, 26, gold)                                      # stem
+    f.fill(27, 27, 36, 27, gold)                                      # base
+    f.fill(24, 28, 39, 28, gold)
+    # a few silver stars twinkling in the corners
+    for i, (sx, sy) in enumerate(((2, 25), (60, 24), (8, 29), (55, 29), (15, 23), (48, 23))):
+        if math.sin(t * 2 + i * 2.1) > 0.2:
+            f.set(sx, sy, silver)
+
+
 def render_special(f, sd, t):
-    """Holiday greeting: field color, effect, accent bars, greeting."""
+    """Holiday greeting: field color, effect, accent bars, greeting - or the
+    holiday's drawn page ("art") when it has one."""
+    if sd.get("menorah"):
+        render_menorah(f, sd, t)
+        return
     accent = rgb(sd["accent"])
     f.bg = rgb(sd["field"])
     draw_effect(f, sd.get("effect"), t, accent)
+    if sd.get("art"):
+        from engine import holiday_art
+        holiday_art.ART[sd["art"]](f, sd, t)
+        return
     bar = mix((0, 0, 0), accent, 0.6)
     f.fill(0, 0, W - 1, 1, bar)
     f.fill(0, H - 2, W - 1, H - 1, bar)
-    draw_lines(f, fit_lines(sd["greeting"].split()), rgb(sd["text"]), top=2, bottom=H - 2)
+    from engine.holiday_art import fill_in
+    greeting = fill_in(sd["greeting"], home_today())
+    draw_lines(f, fit_lines(greeting.split()), rgb(sd["text"]), top=2, bottom=H - 2)
 
 
 def render_striped(f, sd, t):

@@ -44,12 +44,22 @@ BILLY5000/
 
 ## On the Pi (first time)
 
+Flash Raspberry Pi OS Lite (64-bit) with Imager (hostname BILLY5000, user mbixler, Wi-Fi, SSH on), then:
+
 ```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y git python3-venv
+python3 -m venv ~/env --system-site-packages && source ~/env/bin/activate
+pip3 install adafruit-python-shell click
+wget https://github.com/adafruit/Raspberry-Pi-Installer-Scripts/raw/main/rgb-matrix.py
+sudo -E env PATH=$PATH python3 rgb-matrix.py    # Bonnet, Convenience, reboot
+ssh-keygen -t ed25519 -C "billy5000" -N "" -f ~/.ssh/id_ed25519 && cat ~/.ssh/id_ed25519.pub
+#   -> add that line as a read-only deploy key on GitHub
 git clone git@github.com:mbixler10/BILLY5000.git ~/BILLY5000
 cd ~/BILLY5000
-sudo python3 main.py                      # test it; Ctrl+C to stop
+sudo ~/env/bin/python3 main.py            # test it; Ctrl+C to stop
 sudo cp billy5000.service /etc/systemd/system/
-sudo systemctl enable --now billy5000     # starts now and on every boot
+sudo systemctl daemon-reload && sudo systemctl enable --now billy5000
 ```
 
 Update after a push from the PC:
@@ -79,5 +89,7 @@ journalctl -u billy5000 -f                # watch the log
 - [x] Olympic countdown to LA28 + tribute to Great-Grandpa Dallas Bixler (1932 gold, horizontal bar), every 3rd lap
 - [x] Veterans Day honor roll (scrolling) and 9/11 reading of the names from 8:46 AM ET, one name at a time (run tools/get_911_names.py once)
 - [x] V3.3: faster lighthouse page, lighter tickers, Home every 4th page that actually shows (alerts never count, one alert per visit); 9/11 reading on hold
+- [x] Pearl Harbor Day reading of the names (Dec 7, from 7:48 AM Hawaii time = 9:48 AM Seattle): 2,408 names by ship and station, USS ARIZONA first, with rank and service; about 2 hours. Names in data/names_pearl_harbor.txt (rebuild with tools/pearl_from_xlsx.py)
 - [x] V4.0: slower, busier start-up (RAM test, team cries in STARTUP_CHANTS, STARTUP_PACE); Opening Day Mode (Uncle Buck's idea): countdown from a week after the World Series, jersey-number countdown from 99 days (`data/jersey_countdown.txt`), milestone cards, Opening Day takeover, ballpark-themed clocks all Opening Day week + Uncle Buck's credit, new live baseball scoreboard (bases, count, outs, who's up), HOME RUN!! flash. Dates in settings.py (OPENING_DAYS). `python -m engine.baseball all` lists every countdown day.
+- [x] V4.1: Hanukkah (menorah counts the nights), overlapping holidays take turns a lap each, every holiday gets its own Home message (home_label), better contrast on Halloween/Thanksgiving/Boxing Day, and ~30 new days: MLK, Lunar New Year, Scouting's birthday, Super Bowl, Mardi Gras, Leap Day, daylight saving reminders, Pi Day, the four seasons (with Seattle sunrise/sunset), Purim, Easter, Passover, Earth Day, boating's Opening Day, Kentucky Derby, Mother's/Father's Day, Dog Day, Rosh Hashanah, Pirate Day, Yom Kippur, Sukkot, Navy birthday, New Year's Eve, Rose Bowl, Pearl Harbor, and a full-moon page. Sky math in engine/sky.py; drawn pages in engine/holiday_art.py.
 - [ ] Calendar

@@ -45,7 +45,8 @@ class CityPage(Page):
             far = sum((a - b) ** 2 for a, b in zip(accent, field)) ** 0.5 >= 120
             day_c = accent if far else ink
             if self.is_home:
-                name = holiday["name"]
+                from engine.holiday_art import fill_in
+                name = fill_in(holiday.get("home_label", holiday["name"]), local.date())
 
         # top line: red alert bar if NOAA has something active, else code + weekday
         active = alerts.get(self.code, now)

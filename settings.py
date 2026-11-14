@@ -12,7 +12,7 @@ PANEL = {
 }
 
 # ---------------------------------------------------------------- start-up
-VERSION = "V4.0"          # shown on the start-up screen
+VERSION = "V4.1"          # shown on the start-up screen
 STARTUP_SPLASH = True   # BILLY5000 boot + logo screen when the clock launches
 STARTUP_PACE = 1.0      # start-up speed: 1.0 = easy to read (~26 s), 0.5 = quick, 1.5 = slower
 
@@ -140,11 +140,15 @@ SPECIAL_DAYS_ON = True
 # Seconds each special page stays up
 SPECIAL_PAGE_SECONDS = {"special": 10, "striped": 10, "birthday": 12, "anniversary": 12,
                         "aprilfools": 8, "trash": 10, "countdown": 10,
-                        "credit": 7}
+                        "credit": 7, "fullmoon": 8, "halfbirthday": 8, "coliseum": 29, "dallasbday": 28}
 
 # Holidays with solid-field theming. On these days every clock page (Home and each
 # city) takes the field color + effect, and a greeting page leads the rotation.
-# effect: snow | fireworks | hearts | leaves | sparkle | ballpark | none
+# home_label (optional): what Home's bottom line says that day instead of the name.
+# effect: snow | fireworks | hearts | leaves | petals | confetti | apples | gridiron |
+#         candles | sparkle | ballpark | none
+# art (optional): a drawn greeting page instead of plain words.
+# countdown_name / countdown: False - how (or whether) the countdown page names it.
 #
 # ---- Opening Day Mode (Uncle Buck's idea) - see engine/baseball.py ----
 # OPENING_DAYS: add each new season's date once MLB announces it. Everything keys off it:
@@ -177,18 +181,73 @@ HOMER_SECONDS = 8
 # Opening Day week also shows a credit card after PLAY BALL!: "OPENING DAY MODE BY ...".
 # Set to "" to leave it off.
 OPENING_DAY_CREDIT = "UNCLE BUCK"
+# Hanukkah: the evening of the first candle each year (25 Kislev). The theme runs from
+# that evening's day through the last day; the greeting page shows a menorah with
+# the right number of candles lit (a new candle at sundown). Add years as needed.
+HANUKKAH_DATES = {2026: "12-04", 2027: "12-24", 2028: "12-12", 2029: "12-01", 2030: "12-20"}
+CANDLE_LIGHTING = "16:30"
+
+# Holidays that move with the moon or a schedule: the day(s) they're on each year.
+# ["first", "last"] = a run of days. Add years as they're announced. Jewish holidays
+# begin at sundown the evening BEFORE the first date shown here.
+FULL_MOON_PAGE = True          # a FULL MOON TONIGHT page (with the moon's name) on full-moon days
+ROSH_HASHANAH_DATES = {2026: ["09-12", "09-13"], 2027: ["10-02", "10-03"], 2028: ["09-21", "09-22"]}
+YOM_KIPPUR_DATES = {2026: "09-21", 2027: "10-11", 2028: "09-30"}
+SUKKOT_DATES = {2026: ["09-26", "10-02"], 2027: ["10-16", "10-22"], 2028: ["10-05", "10-11"]}
+PURIM_DATES = {2027: "03-23", 2028: "03-12", 2029: "03-01"}
+PASSOVER_DATES = {2027: ["04-22", "04-29"], 2028: ["04-11", "04-18"], 2029: ["03-31", "04-07"]}
+LUNAR_NEW_YEAR_DATES = {2027: "02-06", 2028: "01-26"}
+SUPER_BOWL_DATES = {2027: "02-14", 2028: "02-13"}
+ARMY_NAVY_DATES = {2026: "12-12", 2027: "12-04"}   # moves to the first Saturday in Dec from 2027      # when the next candle "lights" on the board (Seattle sunset-ish)
+
 SPECIAL_DAYS = [
-    {"name": "NEW YEAR",       "date": "01-01", "field": "#0A0A0A", "text": "#FFCC00", "accent": "#FFCC00", "effect": "fireworks", "greeting": "HAPPY NEW YEAR!"},
-    {"name": "GROUNDHOG DAY",  "date": "02-02", "field": "#6B4226", "text": "#D2B48C", "accent": "#D2B48C", "effect": "none",      "greeting": "HAPPY GROUNDHOG DAY"},
-    {"name": "VALENTINES",     "date": "02-14", "field": "#8B0000", "text": "#FFC0CB", "accent": "#FF6FA0", "effect": "hearts",    "greeting": "HAPPY VALENTINE'S DAY"},
-    {"name": "PRESIDENTS DAY", "rule": {"nth_weekday": [2, 0, 3]},  "field": "#14213D", "text": "#FFFFFF", "accent": "#E03A3E", "effect": "sparkle", "greeting": "HAPPY PRESIDENTS DAY"},
-    {"name": "ST PATRICKS",    "date": "03-17", "field": "#0B6B23", "text": "#FFFFFF", "accent": "#2ECC40", "effect": "sparkle",   "greeting": "HAPPY ST. PATRICK'S DAY"},
-    {"name": "LABOR DAY",      "rule": {"nth_weekday": [9, 0, 1]},  "field": "#1A5276", "text": "#FFFFFF", "accent": "#7CC242", "effect": "sparkle", "greeting": "HAPPY LABOR DAY"},
-    {"name": "HALLOWEEN",      "date": "10-31", "field": "#FF8C00", "text": "#1A0033", "accent": "#9B4DFF", "effect": "leaves",    "greeting": "HAPPY HALLOWEEN"},
-    {"name": "THANKSGIVING",   "rule": {"nth_weekday": [11, 3, 4]}, "field": "#8B4513", "text": "#D4AF37", "accent": "#D2691E", "effect": "leaves", "greeting": "HAPPY THANKSGIVING"},
+    {"name": "NEW YEAR",       "date": "01-01", "field": "#0A0A0A", "text": "#FFCC00", "accent": "#FFCC00", "effect": "fireworks", "greeting": "HAPPY NEW YEAR!", "home_label": "HAPPY NEW YEAR"},
+    {"name": "GROUNDHOG DAY",  "date": "02-02", "field": "#6B4226", "text": "#D2B48C", "accent": "#D2B48C", "effect": "none",      "greeting": "HAPPY GROUNDHOG DAY", "home_label": "HAPPY GROUNDHOG DAY"},
+    {"name": "VALENTINES",     "date": "02-14", "field": "#8B0000", "text": "#FFC0CB", "accent": "#FF6FA0", "effect": "hearts",    "greeting": "HAPPY VALENTINE'S DAY", "home_label": "HAPPY VALENTINE'S DAY"},
+    {"name": "PRESIDENTS DAY", "rule": {"nth_weekday": [2, 0, 3]},  "field": "#14213D", "text": "#FFFFFF", "accent": "#E03A3E", "effect": "sparkle", "greeting": "HAPPY PRESIDENTS DAY", "home_label": "HAPPY PRESIDENTS DAY"},
+    {"name": "ST PATRICKS",    "date": "03-17", "field": "#0B6B23", "text": "#FFFFFF", "accent": "#2ECC40", "effect": "sparkle",   "greeting": "HAPPY ST. PATRICK'S DAY", "home_label": "HAPPY ST. PATRICK'S DAY"},
+    {"name": "LABOR DAY",      "rule": {"nth_weekday": [9, 0, 1]},  "field": "#1A5276", "text": "#FFFFFF", "accent": "#7CC242", "effect": "sparkle", "greeting": "HAPPY LABOR DAY", "home_label": "HAPPY LABOR DAY"},
+    {"name": "HALLOWEEN",      "date": "10-31", "field": "#1A0A2E", "text": "#FF8C00", "accent": "#9EFF3A", "effect": "leaves",    "greeting": "HAPPY HALLOWEEN", "home_label": "HAPPY HALLOWEEN"},
+    {"name": "THANKSGIVING",   "rule": {"nth_weekday": [11, 3, 4]}, "field": "#3A1E0B", "text": "#FFC24D", "accent": "#E8731A", "effect": "leaves", "greeting": "HAPPY THANKSGIVING", "home_label": "HAPPY THANKSGIVING"},
     {"name": "OPENING DAY",    "opening_week": True,                "field": "#0E4A1C", "text": "#FFFFFF", "accent": "#F2C46B", "effect": "ballpark", "greeting": "PLAY BALL!"},
-    {"name": "CHRISTMAS",      "start": "12-09", "end": "12-25",    "field": "#0A5C2E", "text": "#FFFFFF", "accent": "#D0202C", "effect": "snow",    "greeting": "MERRY CHRISTMAS"},
-    {"name": "BOXING DAY",     "date": "12-26", "field": "#D0202C", "text": "#0A5C2E", "accent": "#0A5C2E", "effect": "none",      "greeting": "HAPPY BOXING DAY"},
+    {"name": "HANUKKAH",       "first_candle": "HANUKKAH_DATES",    "field": "#123A8C", "text": "#FFFFFF", "accent": "#C8D8FF", "effect": "candles", "greeting": "HAPPY HANUKKAH", "menorah": True, "home_label": "HAPPY HANUKKAH"},
+    {"name": "MLK DAY",        "rule": {"nth_weekday": [1, 0, 3]},  "field": "#1C1A3A", "text": "#FFFFFF", "accent": "#F2C46B", "effect": "none",     "greeting": "HONORING DR. KING", "home_label": "MARTIN LUTHER KING JR. DAY", "countdown_name": "MLK DAY"},
+    {"name": "LUNAR NEW YEAR", "dates": "LUNAR_NEW_YEAR_DATES",     "field": "#6E0A0C", "text": "#FFD34D", "accent": "#FFD34D", "effect": "fireworks", "greeting": "HAPPY LUNAR NEW YEAR", "home_label": "YEAR OF THE {ZODIAC}", "art": "lunar"},
+    {"name": "SCOUTING",       "date": "02-08", "field": "#262E12", "text": "#F2E3B3", "accent": "#D9A441", "effect": "sparkle",   "greeting": "HAPPY BIRTHDAY SCOUTING", "home_label": "DAD & GRANDPA BOSETTI: EAGLE SCOUTS", "countdown_name": "SCOUTING'S BIRTHDAY", "art": "scouting"},
+    {"name": "SUPER BOWL",     "dates": "SUPER_BOWL_DATES",         "field": "#0F4D1A", "text": "#FFFFFF", "accent": "#FFFFFF", "effect": "gridiron", "greeting": "SUPER BOWL SUNDAY", "home_label": "SUPER BOWL SUNDAY"},
+    {"name": "MARDI GRAS",     "rule": {"easter": -47},             "field": "#3B0A57", "text": "#FFD700", "accent": "#00C878", "effect": "confetti", "greeting": "HAPPY MARDI GRAS", "home_label": "HAPPY MARDI GRAS"},
+    {"name": "LEAP DAY",       "date": "02-29", "field": "#0B4F3A", "text": "#B6FF6A", "accent": "#B6FF6A", "effect": "sparkle",   "greeting": "HAPPY LEAP DAY", "home_label": "HAPPY LEAP DAY"},
+    {"name": "SPRING FORWARD", "rule": {"nth_weekday": [3, 6, 2], "offset": -1}, "field": "#102A43", "text": "#9EE493", "accent": "#9EE493", "effect": "none", "greeting": "SPRING FORWARD TONIGHT", "home_label": "SPRING FORWARD TONIGHT: CLOCKS +1 HOUR", "countdown": False},
+    {"name": "PI DAY",         "date": "03-14", "field": "#14213D", "text": "#FFFFFF", "accent": "#F2C46B", "effect": "none",      "greeting": "HAPPY PI DAY 3.14159", "home_label": "PI = 3.14159265...", "countdown_name": "PI DAY"},
+    {"name": "SPRING",         "astro": "spring", "field": "#1E4D2B", "text": "#FFFFFF", "accent": "#FF9ECF", "effect": "sparkle", "greeting": "FIRST DAY OF SPRING", "home_label": "FIRST DAY OF SPRING", "art": "season"},
+    {"name": "PURIM",          "dates": "PURIM_DATES",              "field": "#3B0A57", "text": "#FFE14D", "accent": "#FF6FD8", "effect": "confetti", "greeting": "HAPPY PURIM", "home_label": "HAPPY PURIM"},
+    {"name": "ASH WEDNESDAY",  "rule": {"easter": -46},             "field": "#16141A", "text": "#E4E0EA", "accent": "#6E6878", "effect": "none",   "greeting": "ASH WEDNESDAY", "home_label": "ASH WEDNESDAY: LENT BEGINS", "art": "quiet", "subtitle": "LENT BEGINS"},
+    {"name": "PALM SUNDAY",    "rule": {"easter": -7},              "field": "#0E2A16", "text": "#F2F0D8", "accent": "#5DBB4A", "effect": "none",   "greeting": "PALM SUNDAY", "home_label": "PALM SUNDAY", "art": "palm"},
+    {"name": "GOOD FRIDAY",    "rule": {"easter": -2},              "field": "#140A1E", "text": "#E6DDF0", "accent": "#7A5C99", "effect": "none",   "greeting": "GOOD FRIDAY", "home_label": "GOOD FRIDAY", "art": "good_friday"},
+    {"name": "EASTER",         "rule": {"easter": 0},               "field": "#3D2C6B", "text": "#FFE1F0", "accent": "#9EFFC9", "effect": "sparkle", "greeting": "HAPPY EASTER", "home_label": "HAPPY EASTER", "art": "eggs"},
+    {"name": "PASSOVER",       "dates": "PASSOVER_DATES",           "field": "#102A55", "text": "#FFFFFF", "accent": "#E8D9B5", "effect": "none",     "greeting": "HAPPY PASSOVER", "home_label": "CHAG PESACH SAMEACH", "art": "matzah"},
+    {"name": "EARTH DAY",      "date": "04-22", "field": "#0B2E59", "text": "#7CFC9A", "accent": "#4FC3F7", "effect": "sparkle",   "greeting": "HAPPY EARTH DAY", "home_label": "HAPPY EARTH DAY"},
+    {"name": "BOATING OPENING DAY", "rule": {"nth_weekday": [5, 5, 1]}, "field": "#0A2342", "text": "#FFFFFF", "accent": "#F2C46B", "effect": "none", "greeting": "OPENING DAY BOATING SEASON", "home_label": "OPENING DAY OF BOATING SEASON", "countdown_name": "BOATING OPENING DAY", "art": "boating"},
+    {"name": "KENTUCKY DERBY", "rule": {"nth_weekday": [5, 5, 1]},  "field": "#0B5D1E", "text": "#FFFFFF", "accent": "#E0115F", "effect": "petals",  "greeting": "RUN FOR THE ROSES", "home_label": "KENTUCKY DERBY DAY", "countdown_name": "KENTUCKY DERBY"},
+    {"name": "MOTHERS DAY",    "rule": {"nth_weekday": [5, 6, 2]},  "field": "#5A1036", "text": "#FFD1E8", "accent": "#FF7AB6", "effect": "hearts",  "greeting": "HAPPY MOTHER'S DAY", "home_label": "HAPPY MOTHER'S DAY"},
+    {"name": "FATHERS DAY",    "rule": {"nth_weekday": [6, 6, 3]},  "field": "#0A2342", "text": "#FFFFFF", "accent": "#4FC3F7", "effect": "sparkle", "greeting": "HAPPY FATHER'S DAY", "home_label": "HAPPY FATHER'S DAY"},
+    {"name": "SUMMER",         "astro": "summer", "field": "#0B4F8A", "text": "#FFE066", "accent": "#FFE066", "effect": "sparkle", "greeting": "FIRST DAY OF SUMMER", "home_label": "FIRST DAY OF SUMMER: LONGEST DAY", "art": "season"},
+    {"name": "DOG DAY",        "date": "08-26", "field": "#4A2C17", "text": "#FFE0B2", "accent": "#FFB74D", "effect": "sparkle",   "greeting": "HAPPY DOG DAY SCULLY!", "home_label": "WOOF! HAPPY DOG DAY, SCULLY", "countdown_name": "DOG DAY"},
+    {"name": "ROSH HASHANAH",  "dates": "ROSH_HASHANAH_DATES",      "field": "#3A1C05", "text": "#FFD34D", "accent": "#E0303A", "effect": "apples",  "greeting": "SHANAH TOVAH", "home_label": "SHANAH TOVAH: A SWEET NEW YEAR", "countdown_name": "ROSH HASHANAH", "art": "apples_honey"},
+    {"name": "PIRATE DAY",     "date": "09-19", "field": "#111111", "text": "#FFFFFF", "accent": "#F2C46B", "effect": "none",      "greeting": "AHOY CAPTAIN BILLY!", "home_label": "ARRR! TALK LIKE A PIRATE DAY", "countdown_name": "PIRATE DAY", "art": "pirate"},
+    {"name": "YOM KIPPUR",     "dates": "YOM_KIPPUR_DATES",         "field": "#0E0E16", "text": "#E8E8F0", "accent": "#8A8AA0", "effect": "none",     "greeting": "YOM KIPPUR", "home_label": "YOM KIPPUR: DAY OF ATONEMENT", "art": "quiet", "subtitle": "DAY OF ATONEMENT"},
+    {"name": "FALL",           "astro": "fall",   "field": "#5A2A0A", "text": "#FFB347", "accent": "#E8731A", "effect": "leaves",  "greeting": "FIRST DAY OF FALL", "home_label": "FIRST DAY OF FALL", "art": "season"},
+    {"name": "SUKKOT",         "dates": "SUKKOT_DATES",             "field": "#0B2240", "text": "#FFFFFF", "accent": "#7CC242", "effect": "none",     "greeting": "CHAG SAMEACH", "home_label": "HAPPY SUKKOT", "countdown_name": "SUKKOT", "art": "sukkah"},
+    {"name": "NAVY BIRTHDAY",  "date": "10-13", "field": "#0A1F44", "text": "#F2C46B", "accent": "#FFFFFF", "effect": "sparkle",   "greeting": "HAPPY BIRTHDAY US NAVY", "home_label": "US NAVY BIRTHDAY: SINCE 1775", "countdown_name": "NAVY BIRTHDAY"},
+    {"name": "FALL BACK",      "rule": {"nth_weekday": [11, 6, 1], "offset": -1}, "field": "#2B1A0E", "text": "#FFB347", "accent": "#FFB347", "effect": "none", "greeting": "FALL BACK TONIGHT", "home_label": "FALL BACK TONIGHT: CLOCKS -1 HOUR", "countdown": False},
+    {"name": "WINTER",         "astro": "winter", "field": "#0D2B4D", "text": "#DDEEFF", "accent": "#FFFFFF", "effect": "snow",    "greeting": "FIRST DAY OF WINTER", "home_label": "SHORTEST DAY: THE LIGHT COMES BACK", "art": "season"},
+    {"name": "NEW YEARS EVE",  "date": "12-31", "field": "#0A0A0A", "text": "#FFCC00", "accent": "#FFFFFF", "effect": "fireworks", "greeting": "HAPPY NEW YEAR'S EVE", "home_label": "NEW YEAR'S EVE", "countdown_name": "NEW YEAR'S EVE"},
+    {"name": "ROSE BOWL",      "rule": {"rose_bowl": True},         "field": "#0B3D1E", "text": "#FFFFFF", "accent": "#FF4D6D", "effect": "petals",  "greeting": "ROSE BOWL DAY", "home_label": "THE GRANDDADDY OF THEM ALL"},
+    {"name": "ARMY-NAVY",      "dates": "ARMY_NAVY_DATES",          "field": "#0A1F44", "text": "#F2C46B", "accent": "#F2C46B", "effect": "sparkle", "greeting": "GO NAVY! BEAT ARMY!", "home_label": "GO NAVY! BEAT ARMY!", "countdown_name": "ARMY-NAVY GAME", "art": "beat_army"},
+    {"name": "GOLD MEDAL DAY", "date": "08-11",                     "field": "#0B1F4F", "text": "#F2C46B", "accent": "#F2C46B", "effect": "sparkle", "greeting": "GOLD MEDAL DAY", "home_label": "GREAT-GRANDPA DALLAS: GOLD 1932", "countdown_name": "DALLAS'S GOLD DAY", "art": "gold_day"},
+    {"name": "OLYMPIC GAMES",  "olympics": True,                     "field": "#0B1F4F", "text": "#FFFFFF", "accent": "#F2C46B", "effect": "sparkle", "greeting": "THE OLYMPIC GAMES", "home_label": "{GAMES} OLYMPICS: DAY {GAMEDAY}", "countdown": False, "art": "olympics"},
+    {"name": "CHRISTMAS",      "start": "12-09", "end": "12-25",    "field": "#0A5C2E", "text": "#FFFFFF", "accent": "#D0202C", "effect": "snow",    "greeting": "MERRY CHRISTMAS", "home_label": "MERRY CHRISTMAS"},
+    {"name": "BOXING DAY",     "date": "12-26", "field": "#A3121C", "text": "#FFFFFF", "accent": "#F2C46B", "effect": "none",      "greeting": "HAPPY BOXING DAY", "home_label": "HAPPY BOXING DAY"},
 ]
 
 # Flag-style days: three stripes, one word centered in each.
@@ -205,6 +264,8 @@ STRIPED_DAYS = [
      "text": ["#CE1126", "#006341", "#F0F0F0"], "words": ["FELIZ", "CINCO DE", "MAYO"]},
     {"name": "VETERANS DAY", "date": "11-11", "stripes": ["#B0202C", "#F0F0F0", "#2040A0"],
      "text": ["#F0F0F0", "#B0202C", "#F0F0F0"], "words": ["THANK YOU", "VETERANS", "11-11"]},
+    {"name": "PEARL HARBOR", "date": "12-07", "stripes": ["#6B2C33", "#D8D4C8", "#253A5E"],
+     "text": ["#8FA3C9", "#6B2C33", "#D8D4C8"], "words": ["REMEMBER", "PEARL", "HARBOR"]},
     {"name": "JUNETEENTH",   "date": "06-19", "stripes": ["#BF0A30", "#111111", "#007A3D"],
      "text": ["#FFFFFF", "#F4C430", "#FFFFFF"], "words": ["HAPPY", "JUNE-", "TEENTH"]},
 ]
@@ -247,6 +308,16 @@ NAMES_911_START = (8, 46)       # Eastern time
 NAMES_911_HOLD = 3              # seconds each name is on screen by itself
 NAMES_911_TITLE_SECONDS = 4     # FDNY / NYPD / PAPD / WTC / PENTAGON ... title cards
 
+# Pearl Harbor Day reading of the names: on December 7, starting the minute the
+# attack began (7:48 AM Hawaii time = 9:48 AM in Seattle), the 2,408 killed are
+# read by location: USS ARIZONA first, then each ship and station by how many
+# were lost there, with rank and service under each name. Runs about two hours.
+# The names file comes from tools/pearl_from_xlsx.py.
+PEARL_NAMES_ON = True
+PEARL_START = (7, 48)           # Hawaii time
+PEARL_HOLD = 3                  # seconds each name is on screen
+PEARL_TITLE_SECONDS = 5         # USS ARIZONA / 1,177 title cards
+
 # Family birthdays and anniversaries: confetti page on the day.
 BIRTHDAYS = {
     (1, 6):   ["HAPPY BIRTHDAY AUNT SARAH!"],
@@ -266,6 +337,9 @@ BIRTHDAYS = {
     (12, 27): ["HAPPY BIRTHDAY UNCLE BUCK"],
 }
 APRIL_FOOLS_DATE = (4, 1)
+# Half birthdays: (name, (month, day) of the birthday, birth year). The page shows
+# six months after the birthday, with the half age ("BILLY IS 2 AND A HALF!").
+HALF_BIRTHDAYS = [("BILLY", (3, 21), 2025)]
 
 # Anniversary page (any BIRTHDAYS entry with "ANNIVERSARY" in it gets this page).
 # Set the wedding year to have it alternate with "35 YEARS" etc.; None = leave it off.
@@ -339,6 +413,9 @@ OLYMPICS_TRIBUTE = {
     "ticker": "GREAT-GRANDPA DALLAS BIXLER - OLYMPIC CHAMPION - HORIZONTAL BAR - "
               "LOS ANGELES 1932, THE XTH OLYMPIAD - LA MEMORIAL COLISEUM",
 }
+# Great-Grandpa Dallas's birthday page (Feb 17). Set to None to skip it.
+DALLAS_BIRTHDAY = {"date": (2, 17), "ticker": "BORN FEB 17 1910 IN HUTCHINSON, KANSAS - "
+                   "OLYMPIC CHAMPION, HORIZONTAL BAR, LOS ANGELES 1932"}
 # Upcoming Games: (short name, ticker name, opening ceremony, closing day,
 # time zone of the opening, Wikipedia medal table page). Add the next ones as
 # they get close.

@@ -297,6 +297,8 @@ class LapStart(Page):
         PICKER.new_lap()
         from .home import GATE
         GATE.new_lap()
+        from engine import specialdays
+        specialdays.new_lap()        # overlapping holidays take turns, one lap each
         return False
 
     def draw(self, canvas, now, t):

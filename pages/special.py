@@ -60,6 +60,17 @@ class SpecialSlot(Page):
             sd.render_april_fools(f, t)
         elif self.kind == "honorroll":
             sd.render_honor_roll(f, self.arg, t)
+        elif self.kind == "halfbirthday":
+            sd.render_half_birthday(f, self.arg, t)
+        elif self.kind == "dallasbday":
+            from engine.holiday_art import dallas_birthday
+            dallas_birthday(f, t)
+        elif self.kind == "coliseum":
+            from engine.holiday_art import coliseum
+            coliseum(f, t)
+        elif self.kind == "fullmoon":
+            from engine.holiday_art import full_moon
+            full_moon(f, self.arg, t)
         elif self.kind == "credit":
             sd.render_credit(f, self.arg, t)
         elif self.kind == "trash":

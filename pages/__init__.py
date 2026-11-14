@@ -90,7 +90,9 @@ SHIPS_BELLS = ShipsBells()
 OPENING_ALERT = OpeningDayAlert()
 HOMER_FLASH = HomeRunFlash()
 # First match wins, so ITFDB and Santa outrank the bells. The 9/11 reading of
-# the names outranks everything except the start-up screen.
+# the names (and the Pearl Harbor reading on Dec 7) outrank everything except
+# the start-up screen.
 from engine.specialdays import READING as NAMES_911
-TAKEOVERS = [StartupSplash(), NAMES_911, ItfdbFlash(), HOMER_FLASH, OPENING_ALERT,
+from engine.pearlharbor import READING as NAMES_PEARL
+TAKEOVERS = [StartupSplash(), NAMES_911, NAMES_PEARL, ItfdbFlash(), HOMER_FLASH, OPENING_ALERT,
              SANTA_ALERT, VINNY_ALERT, SHIPS_BELLS]

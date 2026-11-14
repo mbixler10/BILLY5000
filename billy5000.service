@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 User=root
 WorkingDirectory=/home/mbixler/BILLY5000
-ExecStart=/usr/bin/python3 /home/mbixler/BILLY5000/main.py
+ExecStart=/home/mbixler/env/bin/python3 /home/mbixler/BILLY5000/main.py
 Restart=always
 RestartSec=5
 
